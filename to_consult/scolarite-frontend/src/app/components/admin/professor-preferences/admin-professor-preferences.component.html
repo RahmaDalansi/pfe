@@ -1,0 +1,78 @@
+<!-- admin-professor-preferences.component.html -->
+<div class="container-fluid mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Préférences des professeurs</h3>
+        </div>
+        <div class="card-body">
+            <!-- Filtres -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" 
+                           placeholder="Rechercher par nom ou email..."
+                           [(ngModel)]="searchTerm"
+                           (input)="applyFilters()">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" [(ngModel)]="filterSubmitted" (change)="applyFilters()">
+                        <option value="all">Tous les professeurs</option>
+                        <option value="submitted">Avec préférences soumises</option>
+                        <option value="not-submitted">Sans préférences soumises</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary" (click)="loadPreferences()">
+                        <i class="bi bi-arrow-repeat"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tableau des préférences -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Professeur</th>
+                            <th>Email</th>
+                            <th>Statut</th>
+                            <th>Jours préférés</th>
+                            <th>Jours indisponibles</th>
+                            <th>Périodes préférées</th>
+                            <th>Max heures/jour</th>
+                            <th>Max heures/semaine</th>
+                            <th>Date soumission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let pref of filteredPreferences">
+                            <td><strong>{{ pref.professorName }}</strong></td>
+                            <td>{{ pref.email }}</td>
+                            <td>
+                                <span class="badge" [class]="getStatusBadge(pref.hasSubmitted)">
+                                    {{ getStatusText(pref.hasSubmitted) }}
+                                </span>
+                            </td>
+                            <td>{{ getDaysList(pref.preferredDays) }}</td>
+                            <td>{{ getDaysList(pref.unavailableDays) }}</td>
+                            <td>
+                                <!-- ✅ CORRECTION: Enlever l'optional chaining -->
+                                {{ (pref.preferredTimeSlots && pref.preferredTimeSlots.length > 0) ? pref.preferredTimeSlots.join(', ') : 'Aucune' }}
+                            </td>
+                            <td class="text-center">{{ pref.maxHoursPerDay || '-' }}</td>
+                            <td class="text-center">{{ pref.maxHoursPerWeek || '-' }}</td>
+                            <td>
+                                <!-- ✅ CORRECTION: Corriger l'expression du pipe date -->
+                                {{ pref.submittedAt ? (pref.submittedAt | date:'dd/MM/yyyy HH:mm') : '-' }}
+                            </td>
+                        </tr>
+                        <tr *ngIf="filteredPreferences.length === 0">
+                            <td colspan="9" class="text-center text-muted py-4">
+                                Aucune préférence trouvée
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

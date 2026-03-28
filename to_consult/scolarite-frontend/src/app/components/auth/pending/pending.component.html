@@ -1,0 +1,46 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow pending-card">
+        <div class="card-header bg-warning text-dark">
+          <h4 class="mb-0">Compte en attente de validation</h4>
+        </div>
+        <div class="card-body text-center">
+          <div class="mb-4">
+            <i class="bi bi-hourglass-split text-warning pending-icon"></i>
+          </div>
+          
+          <h5>Bonjour {{ username }},</h5>
+          
+          <p class="mt-3">
+            Votre compte a été créé avec succès et est actuellement en attente 
+            de validation par un administrateur.
+          </p>
+          
+          <div class="alert alert-info mt-4">
+            <strong>Prochaines étapes :</strong>
+            <ul class="text-start mt-2">
+              <li>Un administrateur examinera votre demande</li>
+              <li>Vous recevrez un email de confirmation</li>
+              <li>Une fois validé, vous pourrez vous connecter normalement</li>
+            </ul>
+          </div>
+          
+          <p class="text-muted small mt-4">
+            Si vous avez des questions, veuillez contacter l'administration.
+          </p>
+          
+          <div class="button-group mt-3">
+            <button class="btn btn-outline-primary" (click)="checkStatus()">
+              <i class="bi bi-arrow-repeat"></i> Vérifier le statut
+            </button>
+            
+            <button class="btn btn-outline-danger ms-2" (click)="logout()">
+              <i class="bi bi-box-arrow-right"></i> Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

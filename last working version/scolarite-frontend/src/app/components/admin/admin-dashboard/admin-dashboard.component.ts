@@ -1,0 +1,19 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { KeycloakAuthService } from '../../../services/keycloak.service';
+
+@Component({
+  selector: 'app-admin-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './admin-dashboard.component.html',
+  styleUrls: ['./admin-dashboard.component.css']
+})
+export class AdminDashboardComponent implements OnInit {
+  constructor(private keycloakService: KeycloakAuthService) {}
+
+  ngOnInit() {
+    console.log('Admin dashboard chargé');
+  }
+}

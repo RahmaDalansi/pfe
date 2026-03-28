@@ -1,0 +1,221 @@
+<div class="profile-container">
+  <!-- Notification Toast -->
+  @if (notification) {
+    <div class="notification-toast notification-{{ notification.type }}">
+      <div class="toast-content">
+        <i class="toast-icon">{{ getNotificationIcon(notification.type) }}</i>
+        <span class="toast-message">{{ notification.message }}</span>
+      </div>
+      <button class="toast-close" (click)="notification = null">&times;</button>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement de votre profil...</p>
+    </div>
+  } @else if (professor) {
+    <!-- Header -->
+    <div class="profile-header">
+      <div class="profile-avatar">
+        <div class="avatar-wrapper">
+          <span class="avatar-initials">{{ getInitials() }}</span>
+        </div>
+        @if (professor.roles && professor.roles.includes('PROFESSOR')) {
+          <span class="role-badge">Professeur</span>
+        }
+      </div>
+      <div class="profile-title">
+        <h1>{{ professor.firstName }} {{ professor.lastName }}</h1>
+        <p class="username">@{{ professor.username }}</p>
+      </div>
+    </div>
+
+    <!-- Grille des cartes -->
+    <div class="profile-grid">
+      <!-- Carte Informations personnelles -->
+      <div class="profile-card">
+        <div class="card-header">
+          <div class="header-icon personal-icon">
+            <i class="icon-user"></i>
+          </div>
+          <h3>Informations personnelles</h3>
+          @if (!isEditingCommon) {
+            <button class="edit-btn" (click)="startEditing()">
+              <i class="icon-edit"></i> Modifier
+            </button>
+          }
+        </div>
+
+        <div class="card-content">
+          @if (!isEditingCommon) {
+            <div class="info-list">
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ professor.email }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">CIN</span>
+                <span class="info-value">{{ professor.cin || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Nom complet</span>
+                <span class="info-value">{{ professor.firstName || '—' }} {{ professor.lastName || '—' }}</span>
+              </div>
+            </div>
+          } @else {
+            <form #commonForm="ngForm" class="edit-form">
+              <div class="form-group">
+                <label>Prénom</label>
+                <input type="text" class="form-control" [(ngModel)]="commonProfile.firstName" name="firstName" required>
+              </div>
+              <div class="form-group">
+                <label>Nom</label>
+                <input type="text" class="form-control" [(ngModel)]="commonProfile.lastName" name="lastName" required>
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" class="form-control" [(ngModel)]="commonProfile.email" name="email" required email>
+              </div>
+              <div class="form-group">
+                <label>CIN</label>
+                <input type="text" class="form-control" [(ngModel)]="commonProfile.cin" name="cin" required minlength="6">
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="cancelEditing()">Annuler</button>
+                <button type="button" class="btn-primary" (click)="saveProfile()" [disabled]="!commonForm.form.valid || isSaving">
+                  @if (isSaving) {
+                    <span class="spinner-sm"></span>
+                  }
+                  {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+
+      <!-- Carte Informations professionnelles -->
+      <div class="profile-card">
+        <div class="card-header">
+          <div class="header-icon professional-icon">
+            <i class="icon-briefcase"></i>
+          </div>
+          <h3>Informations professionnelles</h3>
+          @if (!isEditingProfessor) {
+            <button class="edit-btn" (click)="startEditingProfessor()">
+              <i class="icon-edit"></i> Modifier
+            </button>
+          }
+        </div>
+
+        <div class="card-content">
+          @if (!isEditingProfessor) {
+            <div class="info-list">
+              <div class="info-row">
+                <span class="info-label">Spécialité</span>
+                <span class="info-value">{{ professor.specialite || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Bureau</span>
+                <span class="info-value">{{ professor.bureau || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Téléphone</span>
+                <span class="info-value">{{ professor.telephone || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Date d'embauche</span>
+                <span class="info-value">{{ professor.dateEmbauche ? (professor.dateEmbauche | date:'dd/MM/yyyy') : '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Matières enseignées</span>
+                <span class="info-value">{{ getSubjectsList() }}</span>
+              </div>
+            </div>
+            
+            @if (professor.hasSubmittedPreferences) {
+              <div class="preferences-badge">
+                <i class="icon-check"></i>
+                <span>Préférences soumises le {{ professor.preferencesSubmittedAt ? (professor.preferencesSubmittedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</span>
+              </div>
+            }
+          } @else {
+            <form #professorForm="ngForm" class="edit-form">
+              <div class="form-group">
+                <label>Spécialité</label>
+                <input type="text" class="form-control" [(ngModel)]="editProfessorData.specialite" name="specialite">
+              </div>
+              <div class="form-group">
+                <label>Bureau</label>
+                <input type="text" class="form-control" [(ngModel)]="editProfessorData.bureau" name="bureau">
+              </div>
+              <div class="form-group">
+                <label>Téléphone</label>
+                <input type="tel" class="form-control" [(ngModel)]="editProfessorData.telephone" name="telephone">
+              </div>
+              <div class="form-group">
+                <label>Date d'embauche</label>
+                <input type="date" class="form-control" [(ngModel)]="editProfessorData.dateEmbauche" name="dateEmbauche">
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="cancelEditingProfessor()">Annuler</button>
+                <button type="button" class="btn-primary" (click)="saveProfessorInfo()">Enregistrer</button>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+
+      <!-- Carte Sécurité -->
+      <div class="profile-card security-card">
+        <div class="card-header">
+          <div class="header-icon security-icon">
+            <i class="icon-lock"></i>
+          </div>
+          <h3>Sécurité</h3>
+        </div>
+
+        <div class="card-content">
+          <h4>Changer le mot de passe</h4>
+          <div class="password-form">
+            <div class="form-group">
+              <label>Mot de passe actuel</label>
+              <input type="password" class="form-control" placeholder="••••••••" [(ngModel)]="passwordData.currentPassword" [disabled]="isUpdatingPassword">
+            </div>
+            <div class="form-group">
+              <label>Nouveau mot de passe</label>
+              <input type="password" class="form-control" placeholder="••••••••" [(ngModel)]="passwordData.newPassword" [disabled]="isUpdatingPassword">
+              <div class="field-hint">Minimum 6 caractères</div>
+              @if (passwordData.newPassword) {
+                <div class="password-strength">
+                  <div class="password-strength-bar" [class]="getPasswordStrengthClass()"></div>
+                </div>
+              }
+            </div>
+            <div class="form-group">
+              <label>Confirmer le mot de passe</label>
+              <input type="password" class="form-control" placeholder="••••••••" [(ngModel)]="passwordData.confirmPassword" [disabled]="isUpdatingPassword">
+            </div>
+            
+            @if (passwordError) {
+              <div class="error-message">
+                <i class="icon-alert"></i>
+                {{ passwordError }}
+              </div>
+            }
+            
+            <button class="btn-security" (click)="changePassword()" [disabled]="!isPasswordFormValid() || isUpdatingPassword">
+              @if (isUpdatingPassword) {
+                <span class="spinner-sm"></span>
+              }
+              <i class="icon-shield"></i>
+              {{ isUpdatingPassword ? 'Mise à jour...' : 'Mettre à jour le mot de passe' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

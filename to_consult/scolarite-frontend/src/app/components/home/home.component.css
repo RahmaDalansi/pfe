@@ -1,0 +1,48 @@
+
+.hero-section {
+  padding: 3rem;
+  animation: fadeIn 0.8s ease;
+}
+
+.hero-icon {
+  font-size: 4rem;
+  color: #0d6efd;
+  margin-bottom: 1rem;
+  animation: bounce 2s infinite;
+}
+
+.display-4 {
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.custom-hr {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border: none;
+  margin: 1.5rem auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}

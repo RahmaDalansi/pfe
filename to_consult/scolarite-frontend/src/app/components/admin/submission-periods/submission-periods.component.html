@@ -1,0 +1,156 @@
+<div class="container-fluid mt-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history"></i> Périodes de saisie des préférences</h2>
+        <button class="btn btn-primary" (click)="openCreateModal()">
+            <i class="bi bi-plus-circle"></i> Nouvelle période
+        </button>
+    </div>
+    
+    <!-- Statut de la période actuelle -->
+    <div class="alert alert-info mb-4" *ngIf="getCurrentPeriodStatus().isOpen">
+        <i class="bi bi-info-circle"></i>
+        <strong>Période active :</strong> {{ getCurrentPeriodStatus().periodName }} - Les professeurs peuvent actuellement saisir leurs préférences.
+    </div>
+    <div class="alert alert-warning mb-4" *ngIf="!getCurrentPeriodStatus().isOpen && periods.length > 0">
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>Aucune période active :</strong> Les professeurs ne peuvent pas saisir leurs préférences pour le moment.
+    </div>
+    
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" 
+                           placeholder="Rechercher..."
+                           [(ngModel)]="searchTerm"
+                           (input)="applyFilters()">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" [(ngModel)]="filterActive" (change)="applyFilters()">
+                        <option value="all">Toutes les périodes</option>
+                        <option value="active">Périodes actives</option>
+                        <option value="inactive">Périodes inactives</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary" (click)="loadPeriods()">
+                        <i class="bi bi-arrow-repeat"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Liste des périodes -->
+    <div class="card">
+        <div class="card-body">
+            <div *ngIf="isLoading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+            
+            <div *ngIf="!isLoading && filteredPeriods.length === 0" class="text-center text-muted py-5">
+                <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+                <p class="mt-3">Aucune période trouvée</p>
+            </div>
+            
+            <div class="table-responsive" *ngIf="!isLoading && filteredPeriods.length > 0">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Année académique</th>
+                            <th>Date début</th>
+                            <th>Date fin</th>
+                            <th>Statut</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let period of filteredPeriods">
+                            <td><strong>{{ period.name }}</strong></td>
+                            <td>{{ period.academicYear }}</td>
+                            <td>{{ formatDate(period.startDate) }}</td>
+                            <td>{{ formatDate(period.endDate) }}</td>
+                            <td>
+                                <span class="badge" [class]="getStatusBadge(period.isActive)">
+                                    {{ getStatusText(period.isActive) }}
+                                </span>
+                            </td>
+                            <td>{{ period.description || '-' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" (click)="openEditModal(period)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning" (click)="toggleActive(period)">
+                                        <i class="bi" [class.bi-toggle-on]="period.isActive" [class.bi-toggle-off]="!period.isActive"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" (click)="deletePeriod(period.id, period.name)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Création/Édition -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1" *ngIf="showModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ isEditing ? 'Modifier' : 'Créer' }} une période de saisie</h5>
+                <button type="button" class="btn-close" (click)="closeModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" class="form-control" [(ngModel)]="currentPeriod.name">
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date de début *</label>
+                        <input type="datetime-local" class="form-control" [(ngModel)]="currentPeriod.startDate">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date de fin *</label>
+                        <input type="datetime-local" class="form-control" [(ngModel)]="currentPeriod.endDate">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Année académique</label>
+                    <select class="form-select" [(ngModel)]="currentPeriod.academicYear">
+                        <option>2023-2024</option>
+                        <option>2024-2025</option>
+                        <option>2025-2026</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="3" [(ngModel)]="currentPeriod.description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+                <button type="button" class="btn btn-primary" (click)="savePeriod()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification -->
+<div *ngIf="notification" class="toast-notification" [class]="'alert alert-' + notification.type">
+    {{ notification.message }}
+</div>

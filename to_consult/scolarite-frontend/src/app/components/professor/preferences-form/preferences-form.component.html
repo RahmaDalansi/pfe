@@ -1,0 +1,106 @@
+<!-- preferences-form.component.html -->
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Préférences d'enseignement</h3>
+        </div>
+        <div class="card-body">
+            <!-- Notification de période -->
+            <div *ngIf="!periodOpen && !preferences.isSubmitted" class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                La période de saisie des préférences est fermée.
+            </div>
+            
+            <!-- Tableau des préférences -->
+            <h4>Disponibilités par jour et période</h4>
+            <p class="text-muted">
+                Cliquez sur une cellule pour changer l'état :
+                <span class="badge bg-success">✔️ Préférable</span>
+                <span class="badge bg-light text-dark">⚪ Non préférable</span>
+                <span class="badge bg-danger">❌ Impossible</span>
+            </p>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered text-center">
+                    <thead>
+                        <tr>
+                            <th>Jour / Période</th>
+                            <th *ngFor="let slot of timeSlots">{{ slotLabels[slot] }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let day of days">
+                            <th class="bg-light">{{ dayLabels[day] }}</th>
+                            <td *ngFor="let slot of timeSlots"
+                                (click)="periodOpen && !preferences.isSubmitted && updatePreference(day, slot)"
+                                [class.cursor-pointer]="periodOpen && !preferences.isSubmitted"
+                                [class]="getCellClass(day, slot)">
+                                {{ getCellText(day, slot) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Autres préférences -->
+            <hr>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Heures maximum par jour</label>
+                        <input type="number" class="form-control" 
+                               [(ngModel)]="preferences.maxHoursPerDay"
+                               [disabled]="!periodOpen || preferences.isSubmitted"
+                               min="1" max="12">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Heures maximum par semaine</label>
+                        <input type="number" class="form-control" 
+                               [(ngModel)]="preferences.maxHoursPerWeek"
+                               [disabled]="!periodOpen || preferences.isSubmitted"
+                               min="1" max="40">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group mt-3">
+                <label>Notes supplémentaires</label>
+                <textarea class="form-control" rows="3" 
+                          [(ngModel)]="preferences.notes"
+                          [disabled]="!periodOpen || preferences.isSubmitted"
+                          placeholder="Ajoutez des remarques ou contraintes particulières..."></textarea>
+            </div>
+            
+            <!-- État de soumission -->
+            <div *ngIf="preferences.isSubmitted" class="alert alert-success mt-3">
+                <i class="bi bi-check-circle"></i>
+                Vos préférences ont été soumises le {{ preferences.submittedAt | date:'dd/MM/yyyy à HH:mm' }}
+            </div>
+            
+            <!-- Boutons d'action -->
+            <div class="mt-4">
+                <button type="button" class="btn btn-primary" 
+                        (click)="onSubmit()"
+                        [disabled]="!periodOpen || preferences.isSubmitted || isSubmitting">
+                    <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ preferences.isSubmitted ? 'Modifier mes préférences' : 'Enregistrer mes préférences' }}
+                </button>
+                
+                <button type="button" class="btn btn-secondary ms-2" 
+                        (click)="loadPreferences()"
+                        [disabled]="isLoading">
+                    <i class="bi bi-arrow-repeat"></i> Actualiser
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification toast -->
+    <div *ngIf="notification" class="toast-notification" 
+         [class]="'alert alert-' + notification.type">
+        {{ notification.message }}
+    </div>
+</div>

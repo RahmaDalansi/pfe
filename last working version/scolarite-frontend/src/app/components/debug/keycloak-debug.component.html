@@ -1,0 +1,236 @@
+<div class="debug-container">
+  <div class="debug-header">
+    <h1>
+      <i class="bi bi-bug"></i> Keycloak Debug Console
+    </h1>
+    <p class="subtitle">Diagnostic des tokens, rôles et endpoints</p>
+  </div>
+
+  <!-- Statut de connexion -->
+  <div class="debug-card" [class.card-success]="isLoggedIn" [class.card-danger]="!isLoggedIn">
+    <div class="card-header">
+      <i class="bi bi-shield-lock"></i>
+      <h3>Statut de connexion</h3>
+    </div>
+    <div class="card-content">
+      <div class="status-badge" [class.status-success]="isLoggedIn" [class.status-danger]="!isLoggedIn">
+        {{ isLoggedIn ? '✅ CONNECTÉ' : '❌ NON CONNECTÉ' }}
+      </div>
+      @if (isLoggedIn) {
+        <div class="user-info">
+          <div class="info-row">
+            <span class="info-label">Nom d'utilisateur:</span>
+            <span class="info-value">{{ username || 'Non disponible' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Rôles:</span>
+            <div class="roles-list">
+              @for (role of userRoles; track role) {
+                <span class="role-badge" [class.role-professor]="role === 'PROFESSOR'" 
+                                          [class.role-admin]="role === 'ADMIN'"
+                                          [class.role-student]="role === 'STUDENT'"
+                                          [class.role-pending]="role === 'PENDING'">
+                  {{ role }}
+                </span>
+              }
+              @if (userRoles.length === 0) {
+                <span class="text-muted">Aucun rôle</span>
+              }
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Has PROFESSOR role:</span>
+            <span class="info-value">
+              <span class="badge" [class.badge-success]="userRoles.includes('PROFESSOR')" 
+                                   [class.badge-danger]="!userRoles.includes('PROFESSOR')">
+                {{ userRoles.includes('PROFESSOR') ? '✅ OUI' : '❌ NON' }}
+              </span>
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Informations du token -->
+  @if (tokenInfo) {
+    <div class="debug-card">
+      <div class="card-header">
+        <i class="bi bi-key"></i>
+        <h3>Informations du token JWT</h3>
+      </div>
+      <div class="card-content">
+        <div class="token-info">
+          <div class="info-row">
+            <span class="info-label">Utilisateur:</span>
+            <span class="info-value">{{ tokenInfo.username || 'Non disponible' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email:</span>
+            <span class="info-value">{{ tokenInfo.email || 'Non disponible' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">ID utilisateur (sub):</span>
+            <span class="info-value code">{{ tokenInfo.sub || 'Non disponible' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Expiration:</span>
+            <span class="info-value" [class.text-warning]="isTokenExpiringSoon()">
+              {{ tokenInfo.exp || 'Non disponible' }}
+              @if (isTokenExpiringSoon()) {
+                <span class="warning-icon">⚠️ Expire bientôt</span>
+              }
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Rôles dans token:</span>
+            <div class="roles-list">
+              @for (role of tokenInfo.roles || []; track role) {
+                <span class="role-badge">{{ role }}</span>
+              }
+              @if (!tokenInfo.roles || tokenInfo.roles.length === 0) {
+                <span class="text-muted">Aucun rôle dans realm_access</span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Test endpoint professeur -->
+  <div class="debug-card">
+    <div class="card-header">
+      <i class="bi bi-braces"></i>
+      <h3>Test endpoint professeur</h3>
+      <button class="refresh-btn" (click)="testProfessorEndpoint()">
+        <i class="bi bi-arrow-repeat"></i> Tester
+      </button>
+    </div>
+    <div class="card-content">
+      @if (isTesting) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Test en cours...</span>
+        </div>
+      } @else if (testResult) {
+        <div class="test-result" [class.result-success]="testResult.success" [class.result-error]="!testResult.success">
+          <div class="result-header">
+            <i [class]="testResult.success ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+            <span>{{ testResult.success ? 'Test réussi' : 'Test échoué' }}</span>
+          </div>
+          <div class="result-details">
+            @if (testResult.success) {
+              <pre class="json-view">{{ testResult.data | json }}</pre>
+            } @else {
+              <div class="error-details">
+                <div class="info-row">
+                  <span class="info-label">Status:</span>
+                  <span class="info-value" [class.text-danger]="testResult.status === 403">
+                    {{ testResult.status || 'N/A' }}
+                    @if (testResult.status === 403) {
+                      <span class="error-hint">- Accès non autorisé (vérifiez les rôles)</span>
+                    }
+                  </span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Message:</span>
+                  <span class="info-value">{{ testResult.message }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <p class="text-muted">Cliquez sur "Tester" pour vérifier l'accès à l'endpoint professeur</p>
+      }
+    </div>
+  </div>
+
+  <!-- Profil professeur -->
+  <div class="debug-card">
+    <div class="card-header">
+      <i class="bi bi-person-vcard"></i>
+      <h3>Profil professeur</h3>
+      <button class="refresh-btn" (click)="loadProfessorProfile()">
+        <i class="bi bi-arrow-repeat"></i> Charger
+      </button>
+    </div>
+    <div class="card-content">
+      @if (isLoadingProfile) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Chargement du profil...</span>
+        </div>
+      } @else if (professorProfile) {
+        <div class="profile-info" [class.profile-error]="professorProfile.error">
+          @if (professorProfile.error) {
+            <div class="error-alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <div>
+                <strong>Erreur de chargement</strong>
+                <p>{{ professorProfile.message || professorProfile.error }}</p>
+                @if (professorProfile.status === 403) {
+                  <p class="error-suggestion">
+                    💡 L'utilisateur n'a pas le rôle PROFESSOR ou le token ne contient pas ce rôle.
+                    Vérifiez que l'utilisateur a bien ce rôle dans Keycloak.
+                  </p>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="profile-details">
+              <div class="info-row">
+                <span class="info-label">ID Keycloak:</span>
+                <span class="info-value code">{{ professorProfile.keycloakId || 'N/A' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Nom:</span>
+                <span class="info-value">{{ professorProfile.firstName }} {{ professorProfile.lastName }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ professorProfile.email }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Spécialité:</span>
+                <span class="info-value">{{ professorProfile.specialite || 'Non renseignée' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Matières:</span>
+                <span class="info-value">
+                  @if (professorProfile.subjects && professorProfile.subjects.length > 0) {
+                    {{ professorProfile.subjects.length }} matière(s)
+                  } @else {
+                    Aucune matière assignée
+                  }
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Préférences soumises:</span>
+                <span class="info-value">
+                  <span [class.text-success]="professorProfile.hasSubmittedPreferences" 
+                        [class.text-muted]="!professorProfile.hasSubmittedPreferences">
+                    {{ professorProfile.hasSubmittedPreferences ? '✅ Oui' : '❌ Non' }}
+                  </span>
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-muted">Cliquez sur "Charger" pour récupérer le profil professeur</p>
+      }
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="debug-actions">
+    <button class="btn-refresh-all" (click)="refreshAll()">
+      <i class="bi bi-arrow-repeat"></i> Rafraîchir tout
+    </button>
+    <button class="btn-clear" (click)="clearLogs()">
+      <i class="bi bi-trash"></i> Effacer la console
+    </button>
+  </div>
+</div>

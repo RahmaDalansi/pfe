@@ -1,0 +1,101 @@
+.modal.show {
+  display: block;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.badge {
+  font-size: 0.9em;
+  padding: 0.5em 0.7em;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+}
+
+.btn-sm i {
+  margin-right: 4px;
+}
+
+.alert {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Styles pour la barre de filtres */
+.filter-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-card .card-body {
+  padding: 1.25rem;
+}
+
+.filter-summary {
+  font-size: 0.875rem;
+}
+
+.filter-summary .badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+}
+
+/* Styles pour les badges de rôle */
+.badge.bg-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+  color: #333;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.badge.bg-warning {
+  background: linear-gradient(135deg, #ffe985 0%, #fa742b 100%);
+  color: #333;
+}
+
+/* Animation pour la recherche */
+.input-group input {
+  transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* Style pour la table */
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-card .row > div {
+    margin-bottom: 1rem;
+  }
+  
+  .table td:before {
+    font-weight: bold;
+  }
+}

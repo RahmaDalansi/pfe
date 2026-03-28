@@ -1,0 +1,12 @@
+<div class="p-6 border rounded-lg shadow-md bg-white">
+  <h2 class="text-xl font-bold mb-4">Administration - Importation de données</h2>
+  <div class="mb-6">
+    <label class="block mb-2 font-medium">Importer PROFESSEURS (CSV) :</label>
+    <input type="file" (change)="onFileChange($event, 'professors')" accept=".csv">
+  </div>
+  <div class="mb-6">
+    <label class="block mb-2 font-medium">Importer ÉTUDIANTS (CSV) :</label>
+    <input type="file" (change)="onFileChange($event, 'students')" accept=".csv">
+  </div>
+  <div *ngIf="message" class="p-4 mt-4 bg-blue-100 text-blue-700 rounded">{{ message }}</div>
+</div>

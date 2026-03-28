@@ -1,0 +1,58 @@
+<!-- user-dashboard.component.html -->
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>Tableau de bord</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" *ngIf="requiresPasswordChange">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Vous devez changer votre mot de passe avant de continuer.
+                        <button class="btn btn-warning btn-sm ms-2" (click)="changePassword()">
+                            Changer le mot de passe
+                        </button>
+                    </div>
+                    
+                    <h4>Bienvenue, {{ username }} !</h4>
+                    <p>Rôle : <strong>{{ userRole }}</strong></p>
+                    
+                    <div class="row mt-4">
+                        <!-- Dans la section du card professeur -->
+                        <div class="col-md-6" *ngIf="isProfessor">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5><i class="bi bi-person-workspace"></i> Espace Professeur</h5>
+                                    <p>Gérez votre profil et vos préférences d'enseignement</p>
+                                    <a routerLink="/professor/profile" class="btn btn-primary">Mon profil professeur</a>
+                                    <a routerLink="/professor/preferences" class="btn btn-outline-primary ms-2">Mes préférences</a>
+                                    <button *ngIf="isAlsoAdmin" class="btn btn-outline-dark ms-2" (click)="switchRole()">
+                                        <i class="bi bi-arrow-repeat"></i> Changer de rôle
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dans la section du card admin -->
+                        <div class="col-md-6" *ngIf="isAlsoAdmin">
+                            <div class="card bg-dark text-white">
+                                <div class="card-body">
+                                    <h5><i class="bi bi-shield-lock"></i> Espace Administrateur</h5>
+                                    <p>Gérez les utilisateurs, les matières et l'emploi du temps</p>
+                                    <button class="btn btn-light" (click)="switchToAdminDashboard()">
+                                        Accéder à l'admin
+                                    </button>
+                                    <button class="btn btn-outline-light ms-2" (click)="switchRole()">
+                                        <i class="bi bi-arrow-repeat"></i> Changer de rôle
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+.redirect-container {
+  padding: 4rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.spinner-lg {
+  width: 4rem;
+  height: 4rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

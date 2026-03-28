@@ -1,0 +1,49 @@
+.avatar-circle-large {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 36px;
+}
+
+.avatar-initials-large {
+  text-transform: uppercase;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.info-item label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.info-item p {
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.profile-card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.status-badge {
+  margin-top: 1rem;
+}
+
+.status-badge .badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}

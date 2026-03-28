@@ -1,0 +1,314 @@
+<div class="container mt-4">
+  <h2>Validation des inscriptions</h2>
+  
+  <!-- Notification -->
+  @if (notification) {
+    <div class="alert alert-{{notification.type}} alert-dismissible fade show" role="alert">
+      {{ notification.message }}
+      <button type="button" class="btn-close" (click)="notification = null"></button>
+    </div>
+  }
+
+  <!-- Barre de filtres -->
+  @if (!isLoading && pendingUsers.length > 0) {
+    <div class="card filter-card mt-4">
+      <div class="card-body">
+        <div class="row align-items-end">
+          <!-- Filtre par rôle -->
+          <div class="col-md-3 mb-3 mb-md-0">
+            <label class="form-label fw-bold">
+              <i class="bi bi-funnel"></i> Filtrer par rôle
+            </label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="roleFilter" 
+              (ngModelChange)="onRoleFilterChange()"
+            >
+              <option value="ALL">Tous les rôles ({{ getTotalCount() }})</option>
+              <option value="STUDENT">Étudiants ({{ getCountByRole('STUDENT') }})</option>
+              <option value="PROFESSOR">Professeurs ({{ getCountByRole('PROFESSOR') }})</option>
+              <option value="ADMIN">Demandes Admin ({{ getCountByRole('ADMIN') }})</option>
+            </select>
+          </div>
+          
+          <!-- Type de recherche -->
+          <div class="col-md-3 mb-3 mb-md-0">
+            <label class="form-label fw-bold">
+              <i class="bi bi-search"></i> Rechercher par
+            </label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="searchType" 
+              (ngModelChange)="onSearchTypeChange()"
+            >
+              <option value="all">🔍 Tous les champs</option>
+              <option value="username">👤 Nom d'utilisateur</option>
+              <option value="name">📝 Nom / Prénom</option>
+              <option value="email">📧 Email</option>
+              <option value="cin">🆔 CIN</option>
+            </select>
+          </div>
+          
+          <!-- Champ de recherche -->
+          <div class="col-md-4 mb-3 mb-md-0">
+            <label class="form-label fw-bold">
+              <i class="bi bi-input-cursor"></i> {{ getSearchTypeLabel(searchType) }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-search"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="onSearchChange()"
+                [placeholder]="'Rechercher par ' + getSearchTypeLabel(searchType).toLowerCase() + '...'"
+              >
+              @if (searchTerm) {
+                <button 
+                  class="btn btn-outline-secondary" 
+                  type="button"
+                  (click)="searchTerm = ''; onSearchChange()"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              }
+            </div>
+          </div>
+          
+          <!-- Bouton réinitialiser -->
+          <div class="col-md-2">
+            <button 
+              class="btn btn-outline-secondary w-100" 
+              (click)="resetFilters()"
+            >
+              <i class="bi bi-arrow-repeat"></i> Réinitialiser
+            </button>
+          </div>
+        </div>
+        
+        <!-- Résumé des filtres -->
+        <div class="filter-summary mt-3 pt-2 border-top">
+          <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            @if (roleFilter !== 'ALL' || searchTerm) {
+              Affichage de {{ getFilteredCount() }} utilisateur(s) sur {{ getTotalCount() }} total
+              @if (roleFilter !== 'ALL') {
+                <span class="badge bg-primary ms-2">Rôle: {{ roleFilter }}</span>
+              }
+              @if (searchTerm) {
+                <span class="badge bg-info ms-2">
+                  {{ getSearchTypeLabel(searchType) }}: "{{ searchTerm }}"
+                </span>
+              }
+            } @else {
+              Affichage de tous les utilisateurs ({{ getTotalCount() }})
+            }
+          </small>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2">Chargement des demandes en attente...</p>
+    </div>
+  }
+
+  <!-- Aucun résultat après filtrage -->
+  @if (!isLoading && pendingUsers.length > 0 && filteredUsers.length === 0) {
+    <div class="alert alert-warning mt-4">
+      <i class="bi bi-exclamation-triangle"></i>
+      Aucun utilisateur ne correspond aux critères de recherche.
+      <button class="btn btn-link p-0 ms-2" (click)="resetFilters()">
+        Réinitialiser les filtres
+      </button>
+    </div>
+  }
+
+  <!-- Aucun utilisateur en attente -->
+  @if (!isLoading && pendingUsers.length === 0) {
+    <div class="alert alert-info mt-4">
+      <i class="bi bi-info-circle"></i>
+      Aucune demande d'inscription en attente
+    </div>
+  }
+
+  <!-- Liste des utilisateurs filtrés -->
+  @if (!isLoading && filteredUsers.length > 0) {
+    <div class="table-responsive mt-4">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Nom complet</th>
+            <th>Nom d'utilisateur</th>
+            <th>Email</th>
+            <th>CIN</th>
+            <th>Rôle demandé</th>
+            <th>Date d'inscription</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers; track user.id) {
+            <tr>
+              <td>
+                <strong>{{user.firstName}} {{user.lastName}}</strong>
+              </td>
+              <td>
+                <code>{{user.username}}</code>
+              </td>
+              <td>{{user.email}}</td>
+              <td>
+                @if (user.cin) {
+                  <code class="cin-code">{{user.cin}}</code>
+                } @else {
+                  <span class="text-muted">Non spécifié</span>
+                }
+              </td>
+              <td>
+                <span class="badge {{getRoleBadgeClass(user.requestedRole)}}">
+                  <i class="{{getRoleIcon(user.requestedRole)}} me-1"></i>
+                  {{user.requestedRole || 'STUDENT'}}
+                </span>
+              </td>
+              <td>{{user.createdTimestamp | date:'dd/MM/yyyy HH:mm'}}</td>
+              <td>
+                <button class="btn btn-sm btn-success me-2" (click)="openApproveModal(user)">
+                  <i class="bi bi-check-circle"></i> Approuver
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="openRejectModal(user)">
+                  <i class="bi bi-x-circle"></i> Rejeter
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Modal d'approbation (inchangé) -->
+  @if (showApproveModal && selectedUser) {
+    <div class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">Approuver l'utilisateur</h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeModals()"></button>
+          </div>
+          <div class="modal-body">
+            <p>Vous êtes sur le point d'approuver :</p>
+            <p>
+              <strong>{{selectedUser.firstName}} {{selectedUser.lastName}}</strong><br>
+              <small class="text-muted">
+                <i class="bi bi-person"></i> Nom d'utilisateur: {{selectedUser.username}}<br>
+                <i class="bi bi-card-text"></i> CIN: {{selectedUser.cin || 'Non spécifié'}}<br>
+                <i class="bi bi-envelope"></i> Email: {{selectedUser.email}}
+              </small>
+            </p>
+            
+            <hr>
+            
+            <label class="form-label fw-bold">Rôles à attribuer :</label>
+            @for (role of availableRoles; track role) {
+              <div class="form-check">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  [value]="role"
+                  [checked]="selectedRoles.includes(role)"
+                  (change)="toggleRole(role, $event)"
+                  [id]="'role_' + role"
+                >
+                <label class="form-check-label" [for]="'role_' + role">
+                  <span class="badge {{getRoleBadgeClass(role)}}">
+                    <i class="{{getRoleIcon(role)}} me-1"></i>
+                    {{ role }}
+                  </span>
+                </label>
+              </div>
+            }
+            
+            @if (selectedUser.requestedRole === 'ADMIN') {
+              <div class="alert alert-warning mt-3">
+                <i class="bi bi-shield-shaded"></i>
+                <strong>Attention :</strong> L'utilisateur a demandé un compte administrateur. 
+                Vérifiez sa légitimité avant d'approuver.
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModals()">Annuler</button>
+            <button 
+              type="button" 
+              class="btn btn-success" 
+              (click)="approveUser()"
+              [disabled]="selectedRoles.length === 0 || actionInProgress"
+            >
+              @if (actionInProgress) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Approuver
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de rejet (inchangé) -->
+  @if (showRejectModal && selectedUser) {
+    <div class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Rejeter l'utilisateur</h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeModals()"></button>
+          </div>
+          <div class="modal-body">
+            <p>Vous êtes sur le point de rejeter :</p>
+            <p>
+              <strong>{{selectedUser.firstName}} {{selectedUser.lastName}}</strong><br>
+              <small class="text-muted">
+                <i class="bi bi-person"></i> Nom d'utilisateur: {{selectedUser.username}}<br>
+                <i class="bi bi-card-text"></i> CIN: {{selectedUser.cin || 'Non spécifié'}}<br>
+                <i class="bi bi-envelope"></i> Email: {{selectedUser.email}}
+              </small>
+            </p>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Raison du rejet :</label>
+              <textarea 
+                class="form-control" 
+                [(ngModel)]="rejectionReason" 
+                rows="3"
+                placeholder="Indiquez la raison du rejet..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModals()">Annuler</button>
+            <button 
+              type="button" 
+              class="btn btn-danger" 
+              (click)="rejectUser()"
+              [disabled]="!rejectionReason || actionInProgress"
+            >
+              @if (actionInProgress) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Rejeter définitivement
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

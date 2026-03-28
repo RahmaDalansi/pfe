@@ -1,0 +1,217 @@
+<div class="container mt-4">
+  <!-- Navigation -->
+  <div class="mb-4">
+    <button class="btn btn-outline-secondary" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i> Retour à la liste
+    </button>
+  </div>
+
+  <!-- Notification -->
+  @if (notification) {
+    <div class="alert alert-{{notification.type}} alert-dismissible fade show" role="alert">
+      {{ notification.message }}
+      <button type="button" class="btn-close" (click)="notification = null"></button>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2">Chargement du profil...</p>
+    </div>
+  }
+
+  @if (!isLoading && user) {
+    <div class="row">
+      <div class="col-md-4">
+        <!-- Carte de profil -->
+        <div class="card profile-card">
+          <div class="card-header bg-primary text-white text-center">
+            <h5 class="mb-0">Profil Utilisateur</h5>
+          </div>
+          <div class="card-body text-center">
+            <div class="avatar-circle-large mx-auto mb-3">
+                <span class="avatar-initials">{{ user.initials || (user.username ? user.username.charAt(0).toUpperCase() : '?') }}</span>            </div>
+            <h4>{{ user.firstName }} {{ user.lastName }}</h4>
+            <p class="text-muted">@{{ user.username }}</p>
+            
+            <div class="mt-3">
+              @for (role of user.roles; track role) {
+                <span class="badge {{getRoleBadgeClass(role)}} me-1 p-2">
+                  <i class="{{getRoleIcon(role)}} me-1"></i> {{ role }}
+                </span>
+              }
+            </div>
+            
+            <hr>
+            
+            <div class="status-badge">
+              <span class="badge {{user.enabled ? 'bg-success' : 'bg-secondary'}} p-2">
+                <i class="bi {{user.enabled ? 'bi-check-circle' : 'bi-x-circle'}}"></i>
+                {{ user.enabled ? 'Compte activé' : 'Compte désactivé' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions Admin -->
+        <div class="card mt-3">
+          <div class="card-header bg-warning">
+            <h6 class="mb-0"><i class="bi bi-shield-lock"></i> Actions Administrateur</h6>
+          </div>
+          <div class="card-body">
+            <button class="btn btn-outline-danger w-100 mb-2" (click)="resetPassword()" [disabled]="actionInProgress">
+              <i class="bi bi-key"></i> Réinitialiser mot de passe (avec CIN)
+            </button>
+            <button class="btn btn-outline-warning w-100 mb-2" (click)="toggleStatus()" [disabled]="actionInProgress">
+              <i class="bi bi-power"></i> {{ user.enabled ? 'Désactiver' : 'Activer' }} le compte
+            </button>
+            <button class="btn btn-outline-danger w-100" (click)="deleteUser()" [disabled]="actionInProgress">
+              <i class="bi bi-trash"></i> Supprimer le compte
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <!-- Informations personnelles -->
+        <div class="card">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-person-vcard"></i> Informations personnelles</h6>
+            @if (!isEditing) {
+              <button class="btn btn-sm btn-light" (click)="startEditing()">
+                <i class="bi bi-pencil"></i> Modifier
+              </button>
+            }
+          </div>
+          <div class="card-body">
+            @if (!isEditing) {
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>Prénom</label>
+                  <p>{{ user.firstName || 'Non renseigné' }}</p>
+                </div>
+                <div class="info-item">
+                  <label>Nom</label>
+                  <p>{{ user.lastName || 'Non renseigné' }}</p>
+                </div>
+                <div class="info-item">
+                  <label>Email</label>
+                  <p>{{ user.email }}</p>
+                </div>
+                <div class="info-item">
+                  <label>CIN</label>
+                  <p><code>{{ user.cin || 'Non renseigné' }}</code></p>
+                </div>
+                <div class="info-item">
+                  <label>Nom d'utilisateur</label>
+                  <p><code>{{ user.username }}</code></p>
+                </div>
+                <div class="info-item">
+                  <label>Email vérifié</label>
+                  <p>
+                    <span class="badge {{user.emailVerified ? 'bg-success' : 'bg-warning'}}">
+                      {{ user.emailVerified ? 'Oui' : 'Non' }}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            } @else {
+              <form #editForm="ngForm">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Prénom</label>
+                    <input type="text" class="form-control" [(ngModel)]="editData.firstName" name="firstName" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-control" [(ngModel)]="editData.lastName" name="lastName" required>
+                  </div>
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" [(ngModel)]="editData.email" name="email" required email>
+                  </div>
+                  <div class="col-md-12 mb-3">
+                    <label class="form-label">CIN</label>
+                    <input type="text" class="form-control" [(ngModel)]="editData.cin" name="cin" minlength="6">
+                    <small class="text-muted">Minimum 6 caractères</small>
+                  </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-end">
+                  <button class="btn btn-secondary" type="button" (click)="cancelEditing()">Annuler</button>
+                  <button class="btn btn-success" type="button" (click)="saveUser()" [disabled]="!editForm.form.valid || isSaving">
+                    @if (isSaving) {
+                      <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Enregistrer
+                  </button>
+                </div>
+              </form>
+            }
+          </div>
+        </div>
+
+        <!-- Gestion des rôles -->
+        <div class="card mt-3">
+          <div class="card-header bg-info text-white">
+            <h6 class="mb-0"><i class="bi bi-tags"></i> Gestion des rôles</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              @for (role of availableRoles; track role) {
+                <div class="col-md-4 mb-2">
+                  <div class="form-check">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      [checked]="user.roles.includes(role)"
+                      (change)="assignRole(role)"
+                      [id]="'role_' + role">
+                    <label class="form-check-label" [for]="'role_' + role">
+                      <span class="badge {{getRoleBadgeClass(role)}}">
+                        <i class="{{getRoleIcon(role)}} me-1"></i> {{ role }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations système -->
+        <div class="card mt-3">
+          <div class="card-header bg-secondary text-white">
+            <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informations système</h6>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Date d'inscription</label>
+                <p>{{ user.createdTimestamp | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+              @if (user.approvedDate) {
+                <div class="info-item">
+                  <label>Date d'approbation</label>
+                  <p>{{ user.approvedDate | date:'dd/MM/yyyy HH:mm' }}</p>
+                </div>
+              }
+              @if (user.approvedBy) {
+                <div class="info-item">
+                  <label>Approuvé par</label>
+                  <p>{{ user.approvedBy }}</p>
+                </div>
+              }
+              <div class="info-item">
+                <label>ID Keycloak</label>
+                <p><code>{{ user.id }}</code></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

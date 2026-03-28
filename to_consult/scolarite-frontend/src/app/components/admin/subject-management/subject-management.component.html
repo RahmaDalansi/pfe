@@ -1,0 +1,175 @@
+<div class="container mt-4">
+  @if (notification) {
+    <div class="alert alert-{{ notification.type }} alert-dismissible fade show" role="alert">
+      {{ notification.message }}
+      <button type="button" class="btn-close" (click)="notification = null"></button>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-book"></i> Gestion des Matières
+      </h5>
+      <button class="btn btn-light btn-sm" (click)="openCreateModal()">
+        <i class="bi bi-plus-circle"></i> Nouvelle matière
+      </button>
+    </div>
+    <div class="card-body">
+      <!-- Filtres -->
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <input 
+            type="text" 
+            class="form-control" 
+            placeholder="Rechercher..." 
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" [(ngModel)]="semesterFilter" (change)="onSemesterChange()">
+            <option [ngValue]="null">Tous les semestres</option>
+            @for (sem of semesters; track sem) {
+              <option [ngValue]="sem">Semestre {{ sem }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <div class="form-check">
+            <input 
+              class="form-check-input" 
+              type="checkbox" 
+              id="activeOnly" 
+              [(ngModel)]="activeOnly"
+              (change)="onActiveOnlyChange()">
+            <label class="form-check-label" for="activeOnly">
+              Matières actives uniquement
+            </label>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
+            <i class="bi bi-arrow-repeat"></i> Réinitialiser
+          </button>
+        </div>
+      </div>
+      
+      <!-- Tableau des matières -->
+      @if (isLoading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Matière</th>
+                <th>Semestre</th>
+                <th>Vol. horaire</th>
+                <th>Crédits</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (subject of filteredSubjects; track subject.id) {
+                <tr>
+                  <td><span class="badge bg-secondary">{{ subject.code }}</span></td>
+                  <td>
+                    <strong>{{ subject.name }}</strong>
+                    @if (subject.description) {
+                      <br>
+                      <small class="text-muted">{{ subject.description | slice:0:50 }}...</small>
+                    }
+                  </td>
+                  <td>Semestre {{ subject.semester }}</td>
+                  <td>{{ subject.weeklyHours }}h/sem</td>
+                  <td>{{ subject.credits }}</td>
+                  <td>
+                    @if (subject.isActive) {
+                      <span class="badge bg-success">Actif</span>
+                    } @else {
+                      <span class="badge bg-secondary">Inactif</span>
+                    }
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" (click)="openEditModal(subject)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteSubject(subject.id, subject.name)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal d'édition/création -->
+@if (showModal) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ isEditing ? 'Modifier la matière' : 'Nouvelle matière' }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Code *</label>
+            <input type="text" class="form-control" [(ngModel)]="currentSubject.code">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nom *</label>
+            <input type="text" class="form-control" [(ngModel)]="currentSubject.name">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="currentSubject.description"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Semestre</label>
+              <select class="form-select" [(ngModel)]="currentSubject.semester">
+                @for (sem of semesters; track sem) {
+                  <option [ngValue]="sem">Semestre {{ sem }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Volume horaire (h/sem)</label>
+              <input type="number" class="form-control" [(ngModel)]="currentSubject.weeklyHours">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Crédits</label>
+              <input type="number" class="form-control" [(ngModel)]="currentSubject.credits">
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="isActive" [(ngModel)]="currentSubject.isActive">
+                <label class="form-check-label" for="isActive">
+                  Actif
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="saveSubject()">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

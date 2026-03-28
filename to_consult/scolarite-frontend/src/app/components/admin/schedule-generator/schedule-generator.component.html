@@ -1,0 +1,196 @@
+<!-- schedule-generator.component.html -->
+<div class="schedule-generator-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h2><i class="bi bi-calendar-plus"></i> Générateur d'emploi du temps</h2>
+        <p class="text-muted">Configurez et générez l'emploi du temps en tenant compte des préférences des professeurs</p>
+    </div>
+    
+    <!-- Statistiques rapides -->
+    <div class="row stats-row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-info">
+                    <h3>{{ professorsPreferences.length }}</h3>
+                    <span>Professeurs</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-info">
+                    <h3>{{ getSubmissionRate() }}%</h3>
+                    <span>Préférences soumises</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-clock"></i></div>
+                <div class="stat-info">
+                    <h3>{{ generationConfig.timeSlots.length * generationConfig.workingDays.length }}</h3>
+                    <span>Créneaux disponibles</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-calendar-week"></i></div>
+                <div class="stat-info">
+                    <h3>{{ generationConfig.workingDays.length }}</h3>
+                    <span>Jours de cours</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Colonne gauche : Configuration -->
+        <div class="col-lg-4">
+            <!-- Configuration de génération -->
+            <div class="card config-card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-gear"></i> Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label>Année académique</label>
+                        <select class="form-select" [(ngModel)]="generationConfig.academicYear">
+                            <option>2023-2024</option>
+                            <option selected>2024-2025</option>
+                            <option>2025-2026</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label>Semestre</label>
+                        <select class="form-select" [(ngModel)]="generationConfig.semester">
+                            <option [value]="1">Semestre 1</option>
+                            <option [value]="2">Semestre 2</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label>Jours de cours</label>
+                        <div class="day-checkboxes">
+                            <label *ngFor="let day of ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']" class="day-checkbox">
+                                <input type="checkbox" [value]="day" 
+                                       [checked]="generationConfig.workingDays.includes(day)"
+                                       (change)="toggleWorkingDay(day, $event)">
+                                {{ dayLabels[day] }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aperçu des préférences -->
+            <div class="card preferences-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-heart"></i> Préférences des professeurs</h5>
+                    <button class="btn btn-sm btn-outline-primary" (click)="showPreferences = !showPreferences">
+                        {{ showPreferences ? 'Masquer' : 'Afficher' }}
+                    </button>
+                </div>
+                <div class="card-body" *ngIf="showPreferences">
+                    <div *ngIf="isLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div *ngIf="!isLoading && professorsPreferences.length === 0" class="text-center text-muted py-4">
+                        Aucune préférence trouvée
+                    </div>
+                    <div class="preferences-list" *ngFor="let pref of professorsPreferences">
+                        <div class="preference-item" [class.not-submitted]="!pref.hasSubmitted">
+                            <div class="preference-header">
+                                <strong>{{ pref.professorName }}</strong>
+                                <span class="badge" [class]="pref.hasSubmitted ? 'bg-success' : 'bg-warning'">
+                                    {{ pref.hasSubmitted ? 'Soumis' : 'Non soumis' }}
+                                </span>
+                            </div>
+                            <div class="preference-details">
+                                <small class="text-muted">{{ getPreferenceSummary(pref) }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Colonne droite : Génération et résultat -->
+        <div class="col-lg-8">
+            <!-- Zone de génération -->
+            <div class="card generate-card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-magic"></i> Génération</h5>
+                </div>
+                <div class="card-body text-center">
+                    <button class="btn btn-primary btn-lg generate-btn" 
+                            (click)="generateSchedule()"
+                            [disabled]="generationInProgress">
+                        <span *ngIf="generationInProgress" class="spinner-border spinner-border-sm me-2"></span>
+                        <i *ngIf="!generationInProgress" class="bi bi-lightning-charge me-2"></i>
+                        {{ generationInProgress ? 'Génération en cours...' : 'Générer l\'emploi du temps' }}
+                    </button>
+                    <p class="text-muted mt-3 small">
+                        <i class="bi bi-info-circle"></i>
+                        La génération tient compte des préférences des professeurs, des disponibilités des salles et des contraintes pédagogiques.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Résultat de génération -->
+            <div class="card result-card" *ngIf="showPreview">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-calendar-check"></i> Emploi du temps généré</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="exportSchedule('pdf')">
+                            <i class="bi bi-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" (click)="exportSchedule('excel')">
+                            <i class="bi bi-file-excel"></i> Excel
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" (click)="saveSchedule()">
+                            <i class="bi bi-save"></i> Sauvegarder
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body schedule-preview">
+                    <!-- Grille d'emploi du temps simulée -->
+                    <div class="schedule-grid">
+                        <div class="schedule-header">
+                            <div class="time-col">Heure</div>
+                            <div *ngFor="let day of generationConfig.workingDays" class="day-col">
+                                {{ dayLabels[day] }}
+                            </div>
+                        </div>
+                        <div *ngFor="let slot of generationConfig.timeSlots" class="schedule-row">
+                            <div class="time-cell">{{ slot.start }} - {{ slot.end }}</div>
+                            <div *ngFor="let day of generationConfig.workingDays" class="schedule-cell" 
+                                 [class.has-course]="generatedSchedule?.[day]?.[slot.start]">
+                                <div *ngIf="generatedSchedule?.[day]?.[slot.start] as course" class="course-info">
+                                    <strong>{{ course.subject }}</strong>
+                                    <small>{{ course.professor }}</small>
+                                    <small class="room">Salle: {{ course.room }}</small>
+                                </div>
+                                <span *ngIf="!generatedSchedule?.[day]?.[slot.start]" class="text-muted">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Message si rien n'est généré -->
+            <div class="card" *ngIf="!showPreview">
+                <div class="card-body text-center text-muted py-5">
+                    <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+                    <p class="mt-3">Aucun emploi du temps généré.</p>
+                    <p class="small">Configurez les paramètres et cliquez sur "Générer l'emploi du temps" pour commencer.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

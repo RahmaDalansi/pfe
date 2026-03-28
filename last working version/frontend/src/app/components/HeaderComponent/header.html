@@ -1,0 +1,22 @@
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a routerLink="/">📚 Scolarite App</a>
+    </div>
+    
+    <nav class="nav-menu">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+      
+      <ng-container *ngIf="!isAuthenticated">
+        <button class="nav-link" (click)="login()">Login</button>
+        <button class="nav-link" (click)="register()">Sign Up</button>
+      </ng-container>
+      
+      <ng-container *ngIf="isAuthenticated">
+        <a routerLink="/api-test" routerLinkActive="active">API Test</a>
+        <span class="welcome">Welcome, {{ username }}!</span>
+        <button class="nav-link logout" (click)="logout()">Logout</button>
+      </ng-container>
+    </nav>
+  </div>
+</header>

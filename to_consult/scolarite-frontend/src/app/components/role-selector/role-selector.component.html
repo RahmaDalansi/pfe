@@ -1,0 +1,26 @@
+<div class="role-selector-container">
+  <div class="card shadow-lg">
+    <div class="card-header bg-primary text-white text-center">
+      <h3 class="mb-0">Bienvenue, {{ username }} !</h3>
+      <p class="mb-0 mt-2">Choisissez l'espace de travail que vous souhaitez utiliser</p>
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
+        @for (role of availableRoles; track role.role) {
+          <div class="col-md-6">
+            <div class="role-card" (click)="selectRole(role.role)">
+              <div class="role-icon">
+                <i [class]="'bi ' + role.icon"></i>
+              </div>
+              <h4>{{ role.name }}</h4>
+              <p class="text-muted">{{ role.description }}</p>
+              <button class="btn btn-outline-primary mt-3">
+                Accéder <i class="bi bi-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

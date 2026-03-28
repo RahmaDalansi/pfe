@@ -1,0 +1,30 @@
+<div class="home-container">
+  <div class="hero-section">
+    <h1>Welcome to Scolarite Management System</h1>
+    <p>Efficient management of students, teachers, and academic records</p>
+    
+    <div *ngIf="isAuthenticated" class="user-greeting">
+      <h2>Hello, {{ username }}! 👋</h2>
+      <p>Your roles: {{ userRoles.join(', ') }}</p>
+    </div>
+    
+    <div *ngIf="!isAuthenticated" class="guest-message">
+      <p>Please login or sign up to access the application.</p>
+    </div>
+  </div>
+
+  <div class="features-section">
+    <div class="feature-card">
+      <h3>Student Management</h3>
+      <p>Manage student records, grades, and attendance</p>
+    </div>
+    <div class="feature-card">
+      <h3>Teacher Portal</h3>
+      <p>Access teaching materials and student progress</p>
+    </div>
+    <div class="feature-card">
+      <h3>Secure Authentication</h3>
+      <p>Protected with Keycloak for enterprise security</p>
+    </div>
+  </div>
+</div>

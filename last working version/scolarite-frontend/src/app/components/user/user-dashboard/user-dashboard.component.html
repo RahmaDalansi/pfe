@@ -1,0 +1,119 @@
+<div class="container mt-5">
+  <div class="card dashboard-card">
+    <div class="card-header bg-primary text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">
+          <i class="bi bi-person-circle me-2"></i>
+          Bienvenue, {{ username }}
+        </h3>
+        <i class="bi bi-mortarboard header-icon"></i>
+      </div>
+    </div>
+    <div class="card-body">
+      @if (requiresPasswordChange) {
+        <div class="alert alert-warning password-alert">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-3 fs-1"></i>
+            <div>
+              <h5 class="mb-1">⚠️ Action requise</h5>
+              <p class="mb-2">Vous devez changer votre mot de passe avant de continuer.</p>
+              <button class="btn btn-warning" (click)="changePassword()">
+                <i class="bi bi-shield-lock me-2"></i>
+                Changer le mot de passe
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (!requiresPasswordChange) {
+        <div>
+          <h4>Tableau de bord</h4>
+          <p class="text-muted">Bienvenue dans votre espace personnel.</p>
+          
+          <!-- Actions spécifiques selon le rôle -->
+          @if (isProfessor) {
+            <div class="alert alert-info mb-4">
+              <i class="bi bi-info-circle"></i>
+              <strong>Professeur :</strong> N'oubliez pas de remplir vos <a routerLink="/professor/preferences" class="alert-link">préférences d'enseignement</a>.
+            </div>
+          }
+          
+          <div class="row mt-4">
+            <!-- Menu Professeur -->
+            @if (isProfessor) {
+              <div class="col-md-4 mb-3">
+                <div class="card feature-card">
+                  <div class="card-body text-center">
+                    <i class="bi bi-calendar-heart feature-icon"></i>
+                    <h5 class="mt-3">Mes préférences</h5>
+                    <p class="text-muted">Gérer mes disponibilités</p>
+                    <a routerLink="/professor/preferences" class="btn btn-primary btn-sm">
+                      <i class="bi bi-pencil"></i> Remplir
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card feature-card">
+                  <div class="card-body text-center">
+                    <i class="bi bi-person-vcard feature-icon"></i>
+                    <h5 class="mt-3">Mon profil</h5>
+                    <p class="text-muted">Voir et modifier mon profil</p>
+                    <a routerLink="/professor/profile" class="btn btn-outline-primary btn-sm">
+                      <i class="bi bi-eye"></i> Consulter
+                    </a>
+                  </div>
+                </div>
+              </div>
+            }
+            
+            <!-- Menu commun -->
+            <div class="col-md-4 mb-3">
+              <div class="card feature-card">
+                <div class="card-body text-center">
+                  <i class="bi bi-journal-bookmark-fill feature-icon"></i>
+                  <h5 class="mt-3">Mes cours</h5>
+                  <p class="text-muted">Consultez vos cours</p>
+                  <button class="btn btn-outline-primary btn-sm" disabled>
+                    Bientôt disponible
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card feature-card">
+                <div class="card-body text-center">
+                  <i class="bi bi-bar-chart-fill feature-icon"></i>
+                  <h5 class="mt-3">Notes</h5>
+                  <p class="text-muted">Voir vos notes</p>
+                  <button class="btn btn-outline-primary btn-sm" disabled>
+                    Bientôt disponible
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card feature-card">
+                <div class="card-body text-center">
+                  <i class="bi bi-calendar-week-fill feature-icon"></i>
+                  <h5 class="mt-3">Emploi du temps</h5>
+                  <p class="text-muted">Planning des cours</p>
+                  <button class="btn btn-outline-primary btn-sm" disabled>
+                    Bientôt disponible
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="card-footer bg-transparent">
+      <button class="btn btn-danger" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-2"></i>
+        Déconnexion
+      </button>
+    </div>
+  </div>
+</div>
