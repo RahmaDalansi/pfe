@@ -18,7 +18,7 @@ import { SubjectManagementComponent } from './components/admin/subject-managemen
 import { SmartProfileComponent } from './components/profile/smart/smart-profile.component';
 import { StandardProfileComponent } from './components/profile/standard/standard-profile.component';
 import { ProfessorProfileComponent } from './components/profile/professor/professor-profile.component';
-
+import { ClassroomManagementComponent } from './components/admin/classroom-management/classroom-management.component';
 
 
 export const routes: Routes = [
@@ -89,6 +89,13 @@ export const routes: Routes = [
   { 
     path: 'admin/subjects', 
     component: SubjectManagementComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] }
+  },
+  
+  { 
+    path: 'admin/classrooms', 
+    component: ClassroomManagementComponent,
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] }
   },

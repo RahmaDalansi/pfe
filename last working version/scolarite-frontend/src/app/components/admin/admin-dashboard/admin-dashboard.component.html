@@ -1,47 +1,184 @@
-<div class="container mt-5">
-  <h2>Tableau de bord Administrateur</h2>
-  
-  <div class="row mt-4">
-    <div class="col-md-4 mb-3">
-      <div class="card">
+<!-- admin-dashboard.component.html -->
+<div class="admin-dashboard">
+  <!-- En-tête -->
+  <div class="dashboard-header mb-4">
+    <h1 class="h2 mb-2">
+      <i class="bi bi-speedometer2 me-2"></i>
+      Tableau de bord Administrateur
+    </h1>
+    <p class="text-muted">
+      Bienvenue, {{ adminName }} | {{ adminEmail }}
+    </p>
+  </div>
+
+  <!-- Statistiques (à développer) -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card bg-primary text-white">
         <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-person-check"></i> Validation des inscriptions
-          </h5>
-          <p class="card-text">Gérer les demandes d'inscription en attente</p>
-          <a routerLink="/admin/validation" class="btn btn-primary">
-            Accéder
-          </a>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-subtitle mb-2 text-white-50">Total Utilisateurs</h6>
+              <h2 class="card-title mb-0">{{ stats.totalUsers || 0 }}</h2>
+            </div>
+            <i class="bi bi-people fs-1 opacity-50"></i>
+          </div>
         </div>
       </div>
     </div>
-    
-    <div class="col-md-4 mb-3">
-      <div class="card">
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card bg-success text-white">
         <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-file-spreadsheet"></i> Import CSV
-          </h5>
-          <p class="card-text">Importer des étudiants ou professeurs</p>
-          <a routerLink="/admin/import" class="btn btn-primary">
-            Accéder
-          </a>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-subtitle mb-2 text-white-50">Enseignants</h6>
+              <h2 class="card-title mb-0">{{ stats.totalTeachers || 0 }}</h2>
+            </div>
+            <i class="bi bi-person-workspace fs-1 opacity-50"></i>
+          </div>
         </div>
       </div>
     </div>
-    
-    <div class="col-md-4 mb-3">
-      <div class="card">
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card bg-info text-white">
         <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-graph-up"></i> Statistiques
-          </h5>
-          <p class="card-text">Voir les statistiques du système</p>
-          <button class="btn btn-secondary" disabled>
-            Bientôt disponible
-          </button>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-subtitle mb-2 text-white-50">Étudiants</h6>
+              <h2 class="card-title mb-0">{{ stats.totalStudents || 0 }}</h2>
+            </div>
+            <i class="bi bi-mortarboard fs-1 opacity-50"></i>
+          </div>
         </div>
       </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card stat-card bg-warning text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-subtitle mb-2 text-white-50">En attente</h6>
+              <h2 class="card-title mb-0">{{ stats.pendingValidations || 0 }}</h2>
+            </div>
+            <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Gestion des Utilisateurs -->
+  <div class="card mb-4">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">
+        <i class="bi bi-people-fill me-2 text-primary"></i>
+        Gestion des Utilisateurs
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 dashboard-card" routerLink="/admin/users">
+            <div class="card-body text-center">
+              <i class="bi bi-person-badge display-4 text-primary mb-3"></i>
+              <h5 class="card-title">Tous les utilisateurs</h5>
+              <p class="card-text text-muted small">
+                Consulter, modifier, activer/désactiver et supprimer des utilisateurs
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 dashboard-card" routerLink="/admin/validation">
+            <div class="card-body text-center">
+              <i class="bi bi-person-check display-4 text-success mb-3"></i>
+              <h5 class="card-title">Validation des inscriptions</h5>
+              <p class="card-text text-muted small">
+                Approuver ou rejeter les nouvelles inscriptions en attente
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 dashboard-card" routerLink="/admin/import">
+            <div class="card-body text-center">
+              <i class="bi bi-file-spreadsheet display-4 text-info mb-3"></i>
+              <h5 class="card-title">Import CSV</h5>
+              <p class="card-text text-muted small">
+                Importer des utilisateurs en masse via fichier CSV
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 dashboard-card disabled-card">
+            <div class="card-body text-center">
+              <i class="bi bi-diagram-3 display-4 text-secondary mb-3"></i>
+              <h5 class="card-title text-secondary">Gestion des groupes</h5>
+              <p class="card-text text-muted small">
+                ⏳ Fonctionnalité en développement
+              </p>
+              <span class="badge bg-warning">Bientôt disponible</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Gestion Pédagogique -->
+  <div class="card mb-4">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">
+        <i class="bi bi-book me-2 text-primary"></i>
+        Gestion Pédagogique
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 dashboard-card" routerLink="/admin/subjects">
+            <div class="card-body text-center">
+              <i class="bi bi-journal-bookmark-fill display-4 text-success mb-3"></i>
+              <h5 class="card-title">Gestion des matières</h5>
+              <p class="card-text text-muted small">
+                Créer, modifier et supprimer des matières
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 dashboard-card" routerLink="/admin/classrooms">
+            <div class="card-body text-center">
+              <i class="bi bi-door-open display-4 text-info mb-3"></i>
+              <h5 class="card-title">Gestion des salles</h5>
+              <p class="card-text text-muted small">
+                Gérer les salles de cours, laboratoires et amphithéâtres
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Emploi du temps (à développer) -->
+  <div class="card">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">
+        <i class="bi bi-calendar-week me-2 text-primary"></i>
+        Emploi du temps
+      </h5>
+    </div>
+    <div class="card-body text-center py-4">
+      <i class="bi bi-calendar2-week display-3 text-muted mb-3"></i>
+      <h5>Génération automatique de l'emploi du temps</h5>
+      <p class="text-muted">
+        Cette fonctionnalité sera disponible prochainement
+      </p>
+      <span class="badge bg-secondary">En développement</span>
     </div>
   </div>
 </div>

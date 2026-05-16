@@ -14,6 +14,7 @@ export class AppComponent implements OnInit {
   isLoggedIn = false;
   username = '';
   userRole = '';
+  hasBothProfessorAndAdminRoles = false; // ✅ Déclaré
 
   constructor(
     private keycloakService: KeycloakAuthService,
@@ -31,7 +32,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.updateUserInfo();
-    // Mettre à jour toutes les 5 secondes au lieu de 2
+    // Mettre à jour toutes les 5 secondes
     setInterval(() => this.updateUserInfo(), 5000);
   }
 
@@ -41,9 +42,19 @@ export class AppComponent implements OnInit {
       this.username = this.keycloakService.getUsername();
       const roles = this.keycloakService.getUserRoles();
       console.log('📊 Mise à jour des rôles:', roles);
+      
+      // ✅ Déterminer le rôle principal
       this.userRole = roles.includes('PROFESSOR') ? 'PROFESSOR' :
                       roles.includes('ADMIN') ? 'ADMIN' :
                       roles.includes('STUDENT') ? 'STUDENT' : 'USER';
+      
+      // ✅ CRITIQUE : Mettre à jour hasBothProfessorAndAdminRoles
+      this.hasBothProfessorAndAdminRoles = roles.includes('PROFESSOR') && roles.includes('ADMIN');
+      
+      console.log('🎯 A les deux rôles (PROFESSOR + ADMIN)?', this.hasBothProfessorAndAdminRoles);
+    } else {
+      // Réinitialiser quand déconnecté
+      this.hasBothProfessorAndAdminRoles = false;
     }
   }
 

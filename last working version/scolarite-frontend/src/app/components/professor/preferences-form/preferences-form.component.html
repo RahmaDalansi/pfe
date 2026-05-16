@@ -1,3 +1,4 @@
+<!-- src/app/components/professor/preferences-form/preferences-form.component.html -->
 <div class="container mt-4">
   @if (notification) {
     <div class="alert alert-{{ notification.type }} alert-dismissible fade show" role="alert">
@@ -38,121 +39,188 @@
         }
         
         <form #preferencesForm="ngForm" (ngSubmit)="onSubmit()">
-          <!-- Jours favorables -->
-          <div class="mb-4">
-            <label class="form-label fw-bold">Jours favorables</label>
-            <div class="row">
-              @for (day of days; track day.value) {
-                <div class="col-md-4 col-lg-3 mb-2">
-                  <div class="form-check">
-                    <input 
-                      class="form-check-input" 
-                      type="checkbox" 
-                      [id]="'pref-' + day.value"
-                      [checked]="isDayPreferred(day.value)"
-                      (change)="toggleDay(day.value, $event, true)"
-                      [disabled]="!periodOpen">
-                    <label class="form-check-label" [for]="'pref-' + day.value">
-                      {{ day.label }}
-                    </label>
-                  </div>
-                </div>
-              }
-            </div>
-            <small class="text-muted">Sélectionnez les jours où vous préférez enseigner</small>
+          <!-- Légende -->
+          <div class="mb-3 d-flex gap-3 flex-wrap">
+            @for (option of statusOptions; track option.value) {
+              <span class="badge {{ option.class }} text-white p-2">
+                <i class="bi {{ option.icon }}"></i> {{ option.label }}
+              </span>
+            }
           </div>
           
-          <!-- Jours impossibles -->
-          <div class="mb-4">
-            <label class="form-label fw-bold">Jours impossibles</label>
-            <div class="row">
-              @for (day of days; track day.value) {
-                <div class="col-md-4 col-lg-3 mb-2">
-                  <div class="form-check">
-                    <input 
-                      class="form-check-input" 
-                      type="checkbox" 
-                      [id]="'unavail-' + day.value"
-                      [checked]="isDayUnavailable(day.value)"
-                      (change)="toggleDay(day.value, $event, false)"
-                      [disabled]="!periodOpen">
-                    <label class="form-check-label text-danger" [for]="'unavail-' + day.value">
-                      {{ day.label }}
-                    </label>
-                  </div>
-                </div>
-              }
-            </div>
-            <small class="text-muted">Sélectionnez les jours où vous ne pouvez pas enseigner</small>
-          </div>
-          
-          <!-- Préférences horaires -->
-          <div class="mb-4">
-            <label class="form-label fw-bold">Préférences horaires</label>
-            <div class="row">
-              @for (slot of timeSlots; track slot.value) {
-                <div class="col-md-6 mb-2">
-                  <div class="form-check">
-                    <input 
-                      class="form-check-input" 
-                      type="checkbox" 
-                      [id]="'slot-' + slot.value"
-                      [checked]="isTimeSlotPreferred(slot.value)"
-                      (change)="toggleTimeSlot(slot.value, $event)"
-                      [disabled]="!periodOpen">
-                    <label class="form-check-label" [for]="'slot-' + slot.value">
-                      {{ slot.label }}
-                    </label>
-                  </div>
-                </div>
-              }
-            </div>
+          <!-- Tableau des disponibilités avec SELECTS -->
+          <div class="table-responsive mb-4">
+            <table class="table table-bordered text-center align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th style="width: 120px">Jour / Créneau</th>
+                  @for (slot of timeSlots; track slot.value) {
+                    <th style="min-width: 180px">
+                      {{ slot.label }}<br>
+                      <small class="fw-normal">{{ slot.hours }}</small>
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (day of preferences.dailyPreferences; track day.day) {
+                  <tr>
+                    <th class="bg-light">{{ day.dayLabel }}</th>
+                    
+                    <!-- Matin -->
+                    <td class="p-2">
+                      <select class="form-select form-select-sm mb-2"
+                              [ngModel]="day.morning.status"
+                              [ngModelOptions]="{standalone: true}"
+                              (ngModelChange)="onStatusChange(day.day, 'morning', $event)"
+                              [disabled]="!periodOpen">
+                        @for (option of statusOptions; track option.value) {
+                          <option [value]="option.value" [ngStyle]="{'color': option.value === 'UNAVAILABLE' ? '#dc3545' : option.value === 'PREFERRED' ? '#198754' : '#0dcaf0'}">
+                            {{ option.label }}
+                          </option>
+                        }
+                      </select>
+                      
+                      @if (day.morning.status === 'UNAVAILABLE') {
+                        <div class="mt-2">
+                          @if (day.morning.reason) {
+                            <div class="small text-muted">
+                              <i class="bi bi-info-circle"></i> 
+                              {{ day.morning.reasonType === 'MEDICAL' ? '🏥 ' : day.morning.reasonType === 'FAMILY' ? '👨‍👩‍👧‍👦 ' : day.morning.reasonType === 'OTHER_JOB' ? '💼 ' : '📝 ' }}
+                              {{ day.morning.reason | slice:0:50 }}{{ day.morning.reason.length > 50 ? '...' : '' }}
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-2"
+                                      (click)="openReasonModal(day.day, day.dayLabel, 'morning', 'Matin')">
+                                <i class="bi bi-pencil"></i>
+                              </button>
+                            </div>
+                          } @else {
+                            <div class="text-warning small">
+                              <i class="bi bi-exclamation-triangle"></i> Raison requise !
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                      (click)="openReasonModal(day.day, day.dayLabel, 'morning', 'Matin')">
+                                <i class="bi bi-plus-circle"></i> Ajouter
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </td>
+                    
+                    <!-- Après-midi -->
+                    <td class="p-2">
+                      <select class="form-select form-select-sm mb-2"
+                              [ngModel]="day.afternoon.status"
+                              [ngModelOptions]="{standalone: true}"
+                              (ngModelChange)="onStatusChange(day.day, 'afternoon', $event)"
+                              [disabled]="!periodOpen">
+                        @for (option of statusOptions; track option.value) {
+                          <option [value]="option.value">
+                            {{ option.label }}
+                          </option>
+                        }
+                      </select>
+                      
+                      @if (day.afternoon.status === 'UNAVAILABLE') {
+                        <div class="mt-2">
+                          @if (day.afternoon.reason) {
+                            <div class="small text-muted">
+                              <i class="bi bi-info-circle"></i> 
+                              {{ day.afternoon.reasonType === 'MEDICAL' ? '🏥 ' : day.afternoon.reasonType === 'FAMILY' ? '👨‍👩‍👧‍👦 ' : day.afternoon.reasonType === 'OTHER_JOB' ? '💼 ' : '📝 ' }}
+                              {{ day.afternoon.reason | slice:0:50 }}{{ day.afternoon.reason.length > 50 ? '...' : '' }}
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-2"
+                                      (click)="openReasonModal(day.day, day.dayLabel, 'afternoon', 'Après-midi')">
+                                <i class="bi bi-pencil"></i>
+                              </button>
+                            </div>
+                          } @else {
+                            <div class="text-warning small">
+                              <i class="bi bi-exclamation-triangle"></i> Raison requise !
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                      (click)="openReasonModal(day.day, day.dayLabel, 'afternoon', 'Après-midi')">
+                                <i class="bi bi-plus-circle"></i> Ajouter
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </td>
+                    
+                    <!-- Soir -->
+                    <td class="p-2">
+                      <select class="form-select form-select-sm mb-2"
+                              [ngModel]="day.evening.status"
+                              [ngModelOptions]="{standalone: true}"
+                              (ngModelChange)="onStatusChange(day.day, 'evening', $event)"
+                              [disabled]="!periodOpen">
+                        @for (option of statusOptions; track option.value) {
+                          <option [value]="option.value">
+                            {{ option.label }}
+                          </option>
+                        }
+                      </select>
+                      
+                      @if (day.evening.status === 'UNAVAILABLE') {
+                        <div class="mt-2">
+                          @if (day.evening.reason) {
+                            <div class="small text-muted">
+                              <i class="bi bi-info-circle"></i> 
+                              {{ day.evening.reasonType === 'MEDICAL' ? '🏥 ' : day.evening.reasonType === 'FAMILY' ? '👨‍👩‍👧‍👦 ' : day.evening.reasonType === 'OTHER_JOB' ? '💼 ' : '📝 ' }}
+                              {{ day.evening.reason | slice:0:50 }}{{ day.evening.reason.length > 50 ? '...' : '' }}
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-2"
+                                      (click)="openReasonModal(day.day, day.dayLabel, 'evening', 'Soir')">
+                                <i class="bi bi-pencil"></i>
+                              </button>
+                            </div>
+                          } @else {
+                            <div class="text-warning small">
+                              <i class="bi bi-exclamation-triangle"></i> Raison requise !
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                      (click)="openReasonModal(day.day, day.dayLabel, 'evening', 'Soir')">
+                                <i class="bi bi-plus-circle"></i> Ajouter
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
           
           <!-- Limites horaires -->
           <div class="row mb-4">
             <div class="col-md-6">
-              <label class="form-label fw-bold">Heures max par jour</label>
-              <input 
-                type="number" 
-                class="form-control" 
-                [(ngModel)]="preferences.maxHoursPerDay"
-                name="maxHoursPerDay"
-                min="1"
-                max="12"
-                [disabled]="!periodOpen">
+              <label class="form-label fw-bold">📊 Heures max par jour</label>
+              <input type="number" class="form-control" 
+                     [(ngModel)]="preferences.maxHoursPerDay"
+                     name="maxHoursPerDay" min="1" max="12"
+                     [disabled]="!periodOpen">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-bold">Heures max par semaine</label>
-              <input 
-                type="number" 
-                class="form-control" 
-                [(ngModel)]="preferences.maxHoursPerWeek"
-                name="maxHoursPerWeek"
-                min="1"
-                max="40"
-                [disabled]="!periodOpen">
+              <label class="form-label fw-bold">📅 Heures max par semaine</label>
+              <input type="number" class="form-control" 
+                     [(ngModel)]="preferences.maxHoursPerWeek"
+                     name="maxHoursPerWeek" min="1" max="40"
+                     [disabled]="!periodOpen">
             </div>
           </div>
           
-          <!-- Notes supplémentaires -->
+          <!-- Notes globales -->
           <div class="mb-4">
-            <label class="form-label fw-bold">Notes / Contraintes supplémentaires</label>
-            <textarea 
-              class="form-control" 
-              rows="3" 
-              [(ngModel)]="preferences.notes"
-              name="notes"
-              [disabled]="!periodOpen"
-              placeholder="Indiquez ici toute information supplémentaire..."></textarea>
+            <label class="form-label fw-bold">📝 Notes / Contraintes supplémentaires</label>
+            <textarea class="form-control" rows="3" 
+                      [(ngModel)]="preferences.globalNotes"
+                      name="globalNotes"
+                      [disabled]="!periodOpen"
+                      placeholder="Indiquez ici toute information supplémentaire (disponibilités particulières, contraintes spécifiques, etc.)..."></textarea>
           </div>
           
           <!-- Boutons -->
           <div class="d-flex justify-content-end gap-2">
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              [disabled]="!periodOpen || isSubmitting">
+            <button type="submit" class="btn btn-primary btn-lg"
+                    [disabled]="!periodOpen || isSubmitting">
               @if (isSubmitting) {
                 <span class="spinner-border spinner-border-sm me-2"></span>
               }
@@ -164,4 +232,47 @@
       </div>
     </div>
   }
+</div>
+
+<!-- Modal pour la raison -->
+<div class="modal fade" id="reasonModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-question-circle"></i> Raison d'indisponibilité
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">
+          <i class="bi bi-calendar-x"></i> 
+          {{ selectedSlot?.dayLabel }} - {{ selectedSlot?.slotLabel }}
+        </p>
+        
+        <div class="mb-3">
+          <label class="form-label fw-bold">Type de raison <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="tempReasonType">
+            @for (type of reasonTypes; track type.value) {
+              <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-bold">Description détaillée <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="3" 
+                    [(ngModel)]="tempReason"
+                    placeholder="Décrivez la raison de votre indisponibilité..."></textarea>
+          <small class="text-muted">Cette raison sera visible par l'administration.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="saveReason()">
+          <i class="bi bi-check-circle"></i> Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

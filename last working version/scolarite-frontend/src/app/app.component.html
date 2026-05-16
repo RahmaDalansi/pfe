@@ -13,29 +13,10 @@
       @if (isLoggedIn) {
         <ul class="navbar-nav me-auto">
           @if (userRole === 'ADMIN') {
+            <!-- ✅ SIMPLIFIÉ : Uniquement le lien vers le Dashboard -->
             <li class="nav-item">
               <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active">
                 <i class="bi bi-speedometer2"></i> Dashboard
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/admin/validation" routerLinkActive="active">
-                <i class="bi bi-person-check"></i> Validation
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/admin/import" routerLinkActive="active">
-                <i class="bi bi-file-spreadsheet"></i> Import
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/admin/users" routerLinkActive="active">
-                <i class="bi bi-people-fill"></i> Utilisateurs
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/admin/subjects" routerLinkActive="active">
-                <i class="bi bi-book"></i> Matières
               </a>
             </li>
           }
@@ -51,11 +32,6 @@
                 <i class="bi bi-person-vcard"></i> Mon Profil
               </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/professor/preferences" routerLinkActive="active">
-                <i class="bi bi-calendar-heart"></i> Préférences
-              </a>
-            </li>
           }
           
           @if (userRole === 'STUDENT') {
@@ -67,6 +43,15 @@
             <li class="nav-item">
               <a class="nav-link" routerLink="/profile" routerLinkActive="active">
                 <i class="bi bi-person-vcard"></i> Mon Profil
+              </a>
+            </li>
+          }
+
+          <!-- Lien pour les professeurs qui sont aussi admins -->
+          @if (hasBothProfessorAndAdminRoles) {
+            <li class="nav-item">
+              <a class="nav-link text-warning" routerLink="/admin/dashboard" routerLinkActive="active">
+                <i class="bi bi-shield-lock-fill"></i> Accès Administrateur
               </a>
             </li>
           }
@@ -99,6 +84,17 @@
                   </a>
                 </li>
               }
+              
+              <!-- Option Admin dans le dropdown pour les professeurs-admins -->
+              @if (hasBothProfessorAndAdminRoles) {
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item text-warning" routerLink="/admin/dashboard">
+                    <i class="bi bi-shield-lock-fill"></i> Administration
+                  </a>
+                </li>
+              }
+              
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item text-danger" href="#" (click)="logout($event)">

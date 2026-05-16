@@ -1,0 +1,284 @@
+<div class="container-fluid mt-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-building"></i> Gestion des salles</h2>
+            <p class="text-muted">Gérez les salles de cours, laboratoires et amphithéâtres pour l'emploi du temps</p>
+        </div>
+        <button class="btn btn-primary" (click)="openCreateModal()">
+            <i class="bi bi-plus-circle"></i> Nouvelle salle
+        </button>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" 
+                               placeholder="Rechercher par nom ou numéro..."
+                               [(ngModel)]="searchTerm"
+                               (input)="onFilterChange()">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" [(ngModel)]="typeFilter" (change)="onFilterChange()">
+                        <option value="all">Tous les types</option>
+                        <option value="COURS">Salles de cours</option>
+                        <option value="LABO">Laboratoires</option>
+                        <option value="AMPHI">Amphithéâtres</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+                        <option value="all">Tous les statuts</option>
+                        <option value="active">Actives</option>
+                        <option value="inactive">Inactives</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
+                        <i class="bi bi-eraser"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row stats-row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary"><i class="bi bi-building"></i></div>
+                <div class="stat-info">
+                    <h3>{{ totalClassrooms }}</h3>
+                    <span>Total salles</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-info">
+                    <h3>{{ activeClassrooms }}</h3>
+                    <span>Salles actives</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info"><i class="bi bi-easel"></i></div>
+                <div class="stat-info">
+                    <h3>{{ coursClassrooms }}</h3>
+                    <span>Salles de cours</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning"><i class="bi bi-pc-display"></i></div>
+                <div class="stat-info">
+                    <h3>{{ laboClassrooms }}</h3>
+                    <span>Laboratoires</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row stats-row mb-4">
+        <div class="col-md-3" *ngIf="amphiClassrooms > 0">
+            <div class="stat-card">
+                <div class="stat-icon bg-secondary"><i class="bi bi-columns-gap"></i></div>
+                <div class="stat-info">
+                    <h3>{{ amphiClassrooms }}</h3>
+                    <span>Amphithéâtres</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3" *ngIf="inactiveClassrooms > 0">
+            <div class="stat-card">
+                <div class="stat-icon bg-danger"><i class="bi bi-slash-circle"></i></div>
+                <div class="stat-info">
+                    <h3>{{ inactiveClassrooms }}</h3>
+                    <span>Salles inactives</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des salles -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-table"></i> Liste des salles</h5>
+            <div class="text-muted small">
+                <i class="bi bi-info-circle"></i>
+                <span class="ms-1">Toggle = Activer/Désactiver | Poubelle = Supprimer définitivement</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Chargement -->
+            <div *ngIf="isLoading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+
+            <!-- Aucun résultat -->
+            <div *ngIf="!isLoading && filteredClassrooms.length === 0" class="text-center text-muted py-5">
+                <i class="bi bi-building-x" style="font-size: 3rem;"></i>
+                <p class="mt-3">Aucune salle trouvée</p>
+                <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+                    <i class="bi bi-plus-circle"></i> Ajouter une salle
+                </button>
+            </div>
+
+            <!-- Tableau -->
+            <div class="table-responsive" *ngIf="!isLoading && filteredClassrooms.length > 0">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Numéro</th>
+                            <th>Type</th>
+                            <th>Capacité</th>
+                            <th>Statut</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let classroom of filteredClassrooms">
+                            <td>
+                                <i class="bi {{ getTypeIcon(classroom.type) }} me-2"></i>
+                                <strong>{{ classroom.name }}</strong>
+                            </td>
+                            <td>{{ classroom.number || '-' }}</td>
+                            <td>
+                                <span class="badge" [class.bg-info]="classroom.type === 'COURS'" 
+                                      [class.bg-warning]="classroom.type === 'LABO'"
+                                      [class.bg-secondary]="classroom.type === 'AMPHI'">
+                                    {{ getTypeLabel(classroom.type) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span [class]="getCapacityClass(classroom.capacity)">
+                                    <i class="bi bi-people"></i> {{ classroom.capacity }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" [class]="getStatusBadge(classroom.isActive)">
+                                    {{ getStatusText(classroom.isActive) }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Modifier -->
+                                    <button class="btn btn-outline-primary" (click)="openEditModal(classroom)" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    
+                                    <!-- Soft Delete - Activer/Désactiver -->
+                                    <button class="btn btn-outline-warning" (click)="toggleStatus(classroom)" 
+                                            [title]="classroom.isActive ? 'Désactiver' : 'Activer'">
+                                        <i class="bi" [class.bi-toggle-on]="classroom.isActive" [class.bi-toggle-off]="!classroom.isActive"></i>
+                                    </button>
+                                    
+                                    <!-- Hard Delete - Suppression définitive -->
+                                    <button class="btn btn-outline-danger" (click)="deleteClassroom(classroom)" title="Supprimer définitivement">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Création/Modification -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1" *ngIf="showModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi" [class.bi-plus-circle]="!isEditing" [class.bi-pencil-square]="isEditing"></i>
+                    {{ isEditing ? 'Modifier' : 'Créer' }} une salle
+                </h5>
+                <button type="button" class="btn-close" (click)="closeModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nom de la salle *</label>
+                    <input type="text" class="form-control" 
+                           [(ngModel)]="currentClassroom.name"
+                           placeholder="Ex: Salle A101, Labo Informatique, Grand Amphi">
+                    <small class="text-muted">Nom unique et descriptif</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Numéro</label>
+                    <input type="text" class="form-control" 
+                           [(ngModel)]="currentClassroom.number"
+                           placeholder="Ex: 101, A201, Labo1">
+                    <small class="text-muted">Optionnel - Numéro ou code de la salle</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Type de salle *</label>
+                    <select class="form-select" [(ngModel)]="currentClassroom.type">
+                        <option *ngFor="let type of classroomTypes" [value]="type.value">
+                            {{ type.label }}
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Capacité (nombre d'étudiants) *</label>
+                    <input type="number" class="form-control" 
+                           [(ngModel)]="currentClassroom.capacity"
+                           min="1" max="500">
+                    <small class="text-muted">Nombre maximum d'étudiants</small>
+                </div>
+                
+                <div class="mb-3" *ngIf="isEditing">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" 
+                               [(ngModel)]="currentClassroom.isActive"
+                               id="activeSwitch">
+                        <label class="form-check-label" for="activeSwitch">
+                            <i class="bi" [class.bi-toggle-on]="currentClassroom.isActive" [class.bi-toggle-off]="!currentClassroom.isActive"></i>
+                            Salle active
+                        </label>
+                    </div>
+                    <small class="text-muted">Une salle inactive n'apparaît pas dans les réservations</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="closeModal()">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </button>
+                <button type="button" class="btn btn-primary" (click)="saveClassroom()">
+                    <i class="bi bi-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay modal -->
+<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal"></div>
+
+<!-- Notification toast -->
+<div *ngIf="notification" class="toast-notification" [class]="'alert alert-' + notification.type" role="alert">
+    <div class="d-flex align-items-center">
+        <i class="bi me-2" 
+           [class.bi-check-circle-fill]="notification.type === 'success'" 
+           [class.bi-exclamation-triangle-fill]="notification.type === 'warning'"
+           [class.bi-x-circle-fill]="notification.type === 'danger'"
+           [class.bi-info-circle-fill]="notification.type === 'info'"></i>
+        <div>{{ notification.message }}</div>
+        <button type="button" class="btn-close ms-auto" (click)="notification = null"></button>
+    </div>
+</div>
