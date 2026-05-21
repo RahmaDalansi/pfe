@@ -1,0 +1,175 @@
+<!-- src/app/components/admin/period-management/period-management.component.html -->
+<div class="container mt-4">
+  @if (notification) {
+    <div class="alert alert-{{ notification.type }} alert-dismissible fade show" role="alert">
+      {{ notification.message }}
+      <button type="button" class="btn-close" (click)="notification = null"></button>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-calendar-range"></i> Gestion des périodes de soumission
+      </h5>
+      <button class="btn btn-light btn-sm" (click)="openCreateModal()">
+        <i class="bi bi-plus-circle"></i> Nouvelle période
+      </button>
+    </div>
+    <div class="card-body">
+      
+      <!-- Filtres -->
+      <div class="row mb-3 g-2">
+        <div class="col-md-4">
+          <input type="text" class="form-control" placeholder="Rechercher..." 
+                 [(ngModel)]="searchTerm" (input)="onFilterChange()">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" [(ngModel)]="academicYearFilter" (change)="onFilterChange()">
+            <option value="">Toutes les années</option>
+            @for (year of academicYears; track year) {
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
+            <i class="bi bi-eraser"></i> Réinitialiser
+          </button>
+        </div>
+      </div>
+      
+      <!-- Tableau des périodes -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Nom</th>
+              <th>Année académique</th>
+              <th>Semestre</th>
+              <th>Date début</th>
+              <th>Date fin</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (isLoading) {
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <div class="spinner-border text-primary"></div>
+                </td>
+              </tr>
+            } @else if (filteredPeriods.length === 0) {
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">
+                  Aucune période trouvée
+                </td>
+              </tr>
+            } @else {
+              @for (period of filteredPeriods; track period.id) {
+                <tr>
+                  <td class="fw-bold">{{ period.name }}</td>
+                  <td>{{ period.academicYear }}</td>
+                  <td>
+                    <span class="badge bg-secondary">Semestre {{ period.semester }}</span>
+                  </td>
+                  <td>{{ period.startDate | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ period.endDate | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span class="badge {{ getStatusBadge(period) }}">
+                      {{ getStatusText(period) }}
+                    </span>
+                    @if (period.isDefault) {
+                      <span class="badge bg-warning ms-1">Défaut</span>
+                    }
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" 
+                            (click)="openEditModal(period)" title="Modifier">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            (click)="deletePeriod(period)" title="Supprimer">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Création/Modification -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-calendar-plus"></i>
+            {{ isEditing ? 'Modifier la période' : 'Nouvelle période' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form #periodForm="ngForm">
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Nom de la période *</label>
+                <input type="text" class="form-control" [(ngModel)]="currentPeriod.name" name="name" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Année académique *</label>
+                <input type="text" class="form-control" [(ngModel)]="currentPeriod.academicYear" name="academicYear" 
+                       pattern="[0-9]{4}-[0-9]{4}" placeholder="2024-2025" required>
+                <small class="text-muted">Format: 2024-2025</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Semestre *</label>
+                <select class="form-select" [(ngModel)]="currentPeriod.semester" name="semester">
+                  <option [value]="1">Semestre 1</option>
+                  <option [value]="2">Semestre 2</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Date de début *</label>
+                <input type="datetime-local" class="form-control" [(ngModel)]="currentPeriod.startDate" name="startDate" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Date de fin *</label>
+                <input type="datetime-local" class="form-control" [(ngModel)]="currentPeriod.endDate" name="endDate" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [(ngModel)]="currentPeriod.isActive" name="isActive" id="isActive">
+                  <label class="form-check-label" for="isActive">
+                    Période active
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [(ngModel)]="currentPeriod.isDefault" name="isDefault" id="isDefault">
+                  <label class="form-check-label" for="isDefault">
+                    Période par défaut
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="savePeriod()" [disabled]="!periodForm.valid">
+            <i class="bi bi-save"></i> {{ isEditing ? 'Mettre à jour' : 'Créer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

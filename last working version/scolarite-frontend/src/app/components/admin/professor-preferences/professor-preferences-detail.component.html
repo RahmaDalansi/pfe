@@ -1,0 +1,137 @@
+<!-- professor-preferences-detail.component.html -->
+<!-- Modal -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)" (click)="closeModal()">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header" [ngClass]="getSubmissionStatusClass()">
+          <h5 class="modal-title text-white">
+            <i class="bi bi-calendar-check"></i>
+            Préférences de {{ professorName }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+        </div>
+        
+        <div class="modal-body">
+          @if (isLoading) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <p class="mt-3 text-muted">Chargement des préférences...</p>
+            </div>
+          } @else if (preferences) {
+            <!-- Informations du professeur -->
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <small class="text-muted">Nom complet</small>
+                    <p class="mb-0 fw-bold">{{ preferences.professorFirstName || professorName }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <small class="text-muted">Email</small>
+                    <p class="mb-0">{{ preferences.professorEmail || 'Non renseigné' }}</p>
+                  </div>
+                  <div class="col-md-6 mt-2">
+                    <small class="text-muted">Statut</small>
+                    <p class="mb-0">
+                      <span class="badge" [ngClass]="getSubmissionStatusClass()">
+                        {{ getSubmissionStatusText() }}
+                      </span>
+                      @if (preferences.submittedAt) {
+                        <span class="text-muted ms-2 small">
+                          le {{ preferences.submittedAt | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                      }
+                    </p>
+                  </div>
+                  <div class="col-md-6 mt-2">
+                    <small class="text-muted">Charge horaire max</small>
+                    <p class="mb-0">{{ preferences.maxHoursPerDay || 6 }}h/jour | {{ preferences.maxHoursPerWeek || 24 }}h/semaine</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tableau des disponibilités -->
+            <h6 class="fw-bold mb-3"><i class="bi bi-grid-3x3-gap-fill"></i> Disponibilités hebdomadaires</h6>
+            <div class="table-responsive">
+              <table class="table table-bordered text-center">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 120px">Jour / Créneau</th>
+                    <th>Matin<br><small class="text-muted">8h-12h</small></th>
+                    <th>Après-midi<br><small class="text-muted">14h-18h</small></th>
+                    <th>Soir<br><small class="text-muted">18h-21h</small></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (dayPref of preferences.dailyPreferences; track dayPref.day) {
+                    <tr>
+                      <th class="bg-light">{{ getDayLabel(dayPref.day) }}</th>
+                      
+                      <!-- Matin -->
+                      <td [ngClass]="getStatusClass(dayPref.morning?.status)">
+                        <i [class]="getStatusIcon(dayPref.morning?.status)"></i>
+                        <div class="small mt-1">{{ getStatusLabel(dayPref.morning?.status) }}</div>
+                        @if (dayPref.morning?.reason) {
+                          <div class="small text-muted mt-1">
+                            <i class="bi bi-chat-dots"></i> {{ dayPref.morning.reason }}
+                          </div>
+                        }
+                      </td>
+                      
+                      <!-- Après-midi -->
+                      <td [ngClass]="getStatusClass(dayPref.afternoon?.status)">
+                        <i [class]="getStatusIcon(dayPref.afternoon?.status)"></i>
+                        <div class="small mt-1">{{ getStatusLabel(dayPref.afternoon?.status) }}</div>
+                        @if (dayPref.afternoon?.reason) {
+                          <div class="small text-muted mt-1">
+                            <i class="bi bi-chat-dots"></i> {{ dayPref.afternoon.reason }}
+                          </div>
+                        }
+                      </td>
+                      
+                      <!-- Soir -->
+                      <td [ngClass]="getStatusClass(dayPref.evening?.status)">
+                        <i [class]="getStatusIcon(dayPref.evening?.status)"></i>
+                        <div class="small mt-1">{{ getStatusLabel(dayPref.evening?.status) }}</div>
+                        @if (dayPref.evening?.reason) {
+                          <div class="small text-muted mt-1">
+                            <i class="bi bi-chat-dots"></i> {{ dayPref.evening.reason }}
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Notes globales -->
+            @if (preferences.globalNotes) {
+              <div class="card mt-3">
+                <div class="card-header bg-light">
+                  <i class="bi bi-chat-text"></i> Notes et remarques
+                </div>
+                <div class="card-body">
+                  <p class="mb-0">{{ preferences.globalNotes }}</p>
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-calendar-x fs-1"></i>
+              <p class="mt-2">Aucune préférence trouvée pour ce professeur</p>
+            </div>
+          }
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

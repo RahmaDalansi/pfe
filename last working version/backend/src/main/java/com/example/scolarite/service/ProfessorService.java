@@ -1,5 +1,6 @@
 package com.example.scolarite.service;
 
+import com.example.scolarite.dto.DailyPreferencesDetailDto;
 import com.example.scolarite.dto.ProfessorDto;
 import com.example.scolarite.dto.SubjectDto;
 import com.example.scolarite.dto.TeachingPreferencesDto;
@@ -24,17 +25,20 @@ public class ProfessorService {
     private final TeachingPreferencesRepository teachingPreferencesRepository;
     private final KeycloakUserService keycloakUserService;
     private final ObjectMapper objectMapper;
+    private final SubmissionPeriodService submissionPeriodService;
 
     public ProfessorService(ProfessorRepository professorRepository,
                             SubjectRepository subjectRepository,
                             TeachingPreferencesRepository teachingPreferencesRepository,
                             KeycloakUserService keycloakUserService,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper,
+                            SubmissionPeriodService submissionPeriodService) {
         this.professorRepository = professorRepository;
         this.subjectRepository = subjectRepository;
         this.teachingPreferencesRepository = teachingPreferencesRepository;
         this.keycloakUserService = keycloakUserService;
         this.objectMapper = objectMapper;
+        this.submissionPeriodService = submissionPeriodService;
     }
 
     /**
@@ -130,10 +134,10 @@ public class ProfessorService {
         professor.getProfessorSubjects().removeIf(ps -> ps.getSubject().getId().equals(subjectId));
         professorRepository.save(professor);
     }
-
     /**
      * Enregistrer les préférences d'enseignement
      */
+    @Transactional
     public TeachingPreferencesDto saveTeachingPreferences(String keycloakId, TeachingPreferencesDto preferencesDto) {
         Professor professor = professorRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("Professeur non trouvé"));
@@ -142,53 +146,57 @@ public class ProfessorService {
                 .findByProfessorId(professor.getId())
                 .orElse(new TeachingPreferences(professor));
 
-        // Mettre à jour les préférences
-        if (preferencesDto.getPreferredDays() != null) {
-            try {
-                preferences.setPreferredDays(objectMapper.writeValueAsString(preferencesDto.getPreferredDays()));
-            } catch (Exception e) {
-                preferences.setPreferredDays(preferencesDto.getPreferredDays().toString());
+        // Récupérer la période courante ou exceptionnelle
+        SubmissionPeriod currentPeriod = submissionPeriodService.getCurrentPeriodEntity();
+        boolean hasException = submissionPeriodService.hasActiveExceptionPeriod(keycloakId);
+
+        if (hasException) {
+            SubmissionPeriodException exception = submissionPeriodService.getActiveExceptionPeriod(keycloakId);
+            preferences.setPeriod(exception.getPeriod());
+            preferences.setExceptionGranted(true);
+        } else if (currentPeriod != null && currentPeriod.getIsActive()) {
+            preferences.setPeriod(currentPeriod);
+            preferences.setExceptionGranted(false);
+            // Mettre à jour l'ancien champ pour compatibilité
+            preferences.setSubmissionPeriodId(currentPeriod.getId());
+        } else {
+            throw new RuntimeException("Aucune période de soumission active");
+        }
+
+        // Sauvegarder les préférences
+        preferences.setMaxHoursPerDay(preferencesDto.getMaxHoursPerDay());
+        preferences.setMaxHoursPerWeek(preferencesDto.getMaxHoursPerWeek());
+
+        // Utiliser globalNotes ou notes
+        String notes = preferencesDto.getGlobalNotes() != null ? preferencesDto.getGlobalNotes() : preferencesDto.getNotes();
+        preferences.setNotes(notes);
+
+        // Sauvegarder les préférences détaillées en JSON
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            if (preferencesDto.getDailyPreferences() != null && !preferencesDto.getDailyPreferences().isEmpty()) {
+                String dailyPrefsJson = mapper.writeValueAsString(preferencesDto.getDailyPreferences());
+                preferences.setConstraints(dailyPrefsJson);
+
+                System.out.println("✅ DailyPreferences sauvegardées en JSON: " + dailyPrefsJson);
             }
-        }
 
-        if (preferencesDto.getUnavailableDays() != null) {
-            try {
-                preferences.setUnavailableDays(objectMapper.writeValueAsString(preferencesDto.getUnavailableDays()));
-            } catch (Exception e) {
-                preferences.setUnavailableDays(preferencesDto.getUnavailableDays().toString());
+            // Sauvegarder aussi les listes simples
+            if (preferencesDto.getPreferredDays() != null && !preferencesDto.getPreferredDays().isEmpty()) {
+                preferences.setPreferredDays(mapper.writeValueAsString(preferencesDto.getPreferredDays()));
             }
-        }
-
-        if (preferencesDto.getPreferredTimeSlots() != null) {
-            try {
-                preferences.setPreferredTimeSlots(objectMapper.writeValueAsString(preferencesDto.getPreferredTimeSlots()));
-            } catch (Exception e) {
-                preferences.setPreferredTimeSlots(preferencesDto.getPreferredTimeSlots().toString());
+            if (preferencesDto.getUnavailableDays() != null && !preferencesDto.getUnavailableDays().isEmpty()) {
+                preferences.setUnavailableDays(mapper.writeValueAsString(preferencesDto.getUnavailableDays()));
             }
-        }
-
-        if (preferencesDto.getMaxHoursPerDay() != null) {
-            preferences.setMaxHoursPerDay(preferencesDto.getMaxHoursPerDay());
-        }
-
-        if (preferencesDto.getMaxHoursPerWeek() != null) {
-            preferences.setMaxHoursPerWeek(preferencesDto.getMaxHoursPerWeek());
-        }
-
-        if (preferencesDto.getNotes() != null) {
-            preferences.setNotes(preferencesDto.getNotes());
-        }
-
-        if (preferencesDto.getConstraints() != null) {
-            try {
-                preferences.setConstraints(objectMapper.writeValueAsString(preferencesDto.getConstraints()));
-            } catch (Exception e) {
-                // Ignorer
+            if (preferencesDto.getPreferredTimeSlots() != null && !preferencesDto.getPreferredTimeSlots().isEmpty()) {
+                preferences.setPreferredTimeSlots(mapper.writeValueAsString(preferencesDto.getPreferredTimeSlots()));
             }
+        } catch (Exception e) {
+            System.err.println("Error saving preferences JSON: " + e.getMessage());
         }
 
-        // Marquer comme soumis
         preferences.setIsSubmitted(true);
+        preferences.setSubmissionStatus("SUBMITTED");
         preferences.setSubmittedAt(LocalDateTime.now());
 
         preferences = teachingPreferencesRepository.save(preferences);
@@ -196,25 +204,20 @@ public class ProfessorService {
         return mapPreferencesToDto(preferences);
     }
 
+
     /**
      * Récupérer les préférences d'enseignement avec création automatique du profil si nécessaire
      */
     public TeachingPreferencesDto getTeachingPreferences(String keycloakId) {
-        // S'assurer que le professeur existe
         Professor professor = professorRepository.findByKeycloakId(keycloakId)
                 .orElseGet(() -> {
-                    // Créer le professeur s'il n'existe pas
                     Professor newProfessor = new Professor(keycloakId);
                     newProfessor = professorRepository.save(newProfessor);
-
-                    // Créer les préférences associées
                     TeachingPreferences newPreferences = new TeachingPreferences(newProfessor);
                     teachingPreferencesRepository.save(newPreferences);
-
                     return newProfessor;
                 });
 
-        // Récupérer ou créer les préférences
         TeachingPreferences preferences = teachingPreferencesRepository
                 .findByProfessorId(professor.getId())
                 .orElseGet(() -> {
@@ -222,14 +225,19 @@ public class ProfessorService {
                     return teachingPreferencesRepository.save(newPrefs);
                 });
 
-        return mapPreferencesToDto(preferences);
+        TeachingPreferencesDto dto = mapPreferencesToDto(preferences);
+
+        // Si les préférences existent déjà, les retourner (même si non soumises)
+        // pour permettre la reprise après rafraîchissement
+        return dto;
     }
+
     /**
      * Vérifier si la période de saisie est ouverte
      */
-    public boolean isSubmissionPeriodOpen() {
-        // TODO: Implémenter la logique de période de saisie
-        return true; // Temporaire: toujours ouvert
+    public boolean isSubmissionPeriodOpen(String keycloakId) {
+        return submissionPeriodService.isSubmissionPeriodOpen(keycloakId);
+
     }
 
     // ==================== MÉTHODES DE MAPPING ====================
@@ -288,38 +296,111 @@ public class ProfessorService {
         return dto;
     }
 
+    // Dans ProfessorService.java - mapPreferencesToDto
     private TeachingPreferencesDto mapPreferencesToDto(TeachingPreferences preferences) {
         TeachingPreferencesDto dto = new TeachingPreferencesDto();
         dto.setId(preferences.getId());
         dto.setProfessorId(preferences.getProfessor().getId());
         dto.setSubmissionPeriodId(preferences.getSubmissionPeriodId());
+        if (preferences.getPeriod() != null) {
+            dto.setSubmissionPeriodId(preferences.getPeriod().getId());
+        }
         dto.setSubmittedAt(preferences.getSubmittedAt());
         dto.setIsSubmitted(preferences.getIsSubmitted());
         dto.setMaxHoursPerDay(preferences.getMaxHoursPerDay());
         dto.setMaxHoursPerWeek(preferences.getMaxHoursPerWeek());
         dto.setNotes(preferences.getNotes());
+        dto.setGlobalNotes(preferences.getNotes());
+        dto.setSubmissionStatus(preferences.getSubmissionStatus());
 
-        // Désérialiser les JSON
+        // ⚠️ CRITIQUE: Désérialiser correctement les JSON
         try {
-            if (preferences.getPreferredDays() != null) {
-                dto.setPreferredDays(objectMapper.readValue(preferences.getPreferredDays(), List.class));
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Lire les préférences depuis constraints (qui stocke dailyPreferences)
+            if (preferences.getConstraints() != null && !preferences.getConstraints().isEmpty()) {
+                System.out.println("=== DÉSÉRIALISATION DES PRÉFÉRENCES ===");
+                System.out.println("Constraints JSON: " + preferences.getConstraints());
+
+                try {
+                    // Essayer de parser comme une liste de DailyPreferencesDetailDto
+                    List<DailyPreferencesDetailDto> dailyPrefs = mapper.readValue(
+                            preferences.getConstraints(),
+                            mapper.getTypeFactory().constructCollectionType(List.class, DailyPreferencesDetailDto.class)
+                    );
+                    dto.setDailyPreferences(dailyPrefs);
+                    System.out.println("✅ DailyPreferences chargées: " + dailyPrefs.size());
+
+                    // Afficher le contenu pour déboguer
+                    for (DailyPreferencesDetailDto day : dailyPrefs) {
+                        System.out.println("  " + day.getDay() + ": Matin=" + day.getMorning().getStatus() +
+                                ", AM=" + day.getAfternoon().getStatus() +
+                                ", Soir=" + day.getEvening().getStatus());
+                    }
+                } catch (Exception e) {
+                    System.out.println("❌ Erreur parsing dailyPreferences: " + e.getMessage());
+                }
             }
-            if (preferences.getUnavailableDays() != null) {
-                dto.setUnavailableDays(objectMapper.readValue(preferences.getUnavailableDays(), List.class));
+
+            // Backup: lire les anciens formats
+            if (preferences.getPreferredDays() != null && !preferences.getPreferredDays().isEmpty()) {
+                dto.setPreferredDays(mapper.readValue(preferences.getPreferredDays(),
+                        mapper.getTypeFactory().constructCollectionType(List.class, String.class)));
             }
-            if (preferences.getPreferredTimeSlots() != null) {
-                dto.setPreferredTimeSlots(objectMapper.readValue(preferences.getPreferredTimeSlots(), List.class));
+            if (preferences.getUnavailableDays() != null && !preferences.getUnavailableDays().isEmpty()) {
+                dto.setUnavailableDays(mapper.readValue(preferences.getUnavailableDays(),
+                        mapper.getTypeFactory().constructCollectionType(List.class, String.class)));
             }
-            if (preferences.getConstraints() != null) {
-                dto.setConstraints(objectMapper.readValue(preferences.getConstraints(),
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, TeachingPreferencesDto.ConstraintDto.class)));
+            if (preferences.getPreferredTimeSlots() != null && !preferences.getPreferredTimeSlots().isEmpty()) {
+                dto.setPreferredTimeSlots(mapper.readValue(preferences.getPreferredTimeSlots(),
+                        mapper.getTypeFactory().constructCollectionType(List.class, String.class)));
             }
         } catch (Exception e) {
-            // Ignorer les erreurs de parsing
+            System.err.println("Error parsing preferences JSON: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return dto;
     }
 
+    @Transactional
+    public TeachingPreferencesDto saveTeachingPreferencesDraft(String keycloakId, TeachingPreferencesDto preferencesDto) {
+        Professor professor = professorRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("Professeur non trouvé"));
 
+        TeachingPreferences preferences = teachingPreferencesRepository
+                .findByProfessorId(professor.getId())
+                .orElse(new TeachingPreferences(professor));
+
+        // Sauvegarder les préférences sans marquer comme soumises
+        preferences.setMaxHoursPerDay(preferencesDto.getMaxHoursPerDay());
+        preferences.setMaxHoursPerWeek(preferencesDto.getMaxHoursPerWeek());
+
+        String notes = preferencesDto.getGlobalNotes() != null ? preferencesDto.getGlobalNotes() : preferencesDto.getNotes();
+        preferences.setNotes(notes);
+
+        // Sauvegarder les préférences détaillées
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            if (preferencesDto.getDailyPreferences() != null && !preferencesDto.getDailyPreferences().isEmpty()) {
+                String dailyPrefsJson = mapper.writeValueAsString(preferencesDto.getDailyPreferences());
+                preferences.setConstraints(dailyPrefsJson);
+            }
+        } catch (Exception e) {
+            System.err.println("Error saving draft: " + e.getMessage());
+        }
+
+        // Ne pas set isSubmitted à true pour le brouillon
+        preferences = teachingPreferencesRepository.save(preferences);
+
+        return mapPreferencesToDto(preferences);
+    }
+
+    // Dans ProfessorService.java
+    public TeachingPreferences getTeachingPreferencesRaw(String keycloakId) {
+        Professor professor = professorRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("Professeur non trouvé"));
+
+        return teachingPreferencesRepository.findByProfessorId(professor.getId()).orElse(null);
+    }
 }

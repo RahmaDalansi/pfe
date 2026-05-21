@@ -1,0 +1,167 @@
+/* period-management.component.css */
+.period-management-container {
+  padding: 1rem;
+}
+
+/* Style pour les badges de statut */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.badge.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+.badge.bg-success {
+  background-color: #198754 !important;
+}
+
+.badge.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+}
+
+/* Animation pour le modal */
+.modal.fade.show {
+  background-color: rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.modal-dialog {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Style pour le tableau */
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+/* Hover effect sur les lignes */
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+/* Style des boutons d'action */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Style des filtres */
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Style des cartes */
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  background-color: #f8f9fa;
+}
+
+/* Notification toast */
+.alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1050;
+  min-width: 300px;
+  animation: slideInRight 0.3s ease-out;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+  
+  .btn-sm {
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .alert {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+  }
+}
+
+/* Style pour les champs de formulaire dans le modal */
+.modal-body .form-label {
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.modal-body .form-text {
+  font-size: 0.7rem;
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
+}

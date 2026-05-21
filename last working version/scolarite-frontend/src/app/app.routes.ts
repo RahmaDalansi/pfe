@@ -20,6 +20,10 @@ import { StandardProfileComponent } from './components/profile/standard/standard
 import { ProfessorProfileComponent } from './components/profile/professor/professor-profile.component';
 import { ClassroomManagementComponent } from './components/admin/classroom-management/classroom-management.component';
 
+// NOUVEAUX IMPORTS
+import { PeriodManagementComponent } from './components/admin/period-management/period-management.component';
+import { SubmissionStatisticsComponent } from './components/admin/submission-statistics/submission-statistics.component';
+import { ExceptionPeriodComponent } from './components/admin/exception-period/exception-period.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -28,8 +32,7 @@ export const routes: Routes = [
   { path: 'pending', component: PendingComponent },
   { path: 'debug', component: KeycloakDebugComponent },
   
-  
-
+  // Routes de profil
   {
     path: 'profile',
     component: SmartProfileComponent,
@@ -48,12 +51,15 @@ export const routes: Routes = [
     data: { roles: ['PROFESSOR'] }
   },
   
+  // Routes utilisateur
   { 
     path: 'dashboard', 
     component: UserDashboardComponent,
     canActivate: [AuthGuard],
     data: { roles: ['STUDENT', 'PROFESSOR'] }
   },
+  
+  // Routes administrateur
   { 
     path: 'admin/dashboard',
     component: AdminDashboardComponent,
@@ -78,40 +84,54 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] }
   },
-  
   { 
     path: 'admin/users/:id', 
     component: UserProfileAdminComponent,
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] }
   },
-
   { 
     path: 'admin/subjects', 
     component: SubjectManagementComponent,
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] }
   },
-  
   { 
     path: 'admin/classrooms', 
     component: ClassroomManagementComponent,
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] }
   },
-
+  
+  // NOUVELLES ROUTES - Gestion des périodes de soumission
+  { 
+    path: 'admin/periods', 
+    component: PeriodManagementComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] }
+  },
+  { 
+    path: 'admin/periods/:id/statistics', 
+    component: SubmissionStatisticsComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] }
+  },
+  { 
+    path: 'admin/periods/:id/exceptions', 
+    component: ExceptionPeriodComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN'] }
+  },
+  
+  // Route professeur
   { 
     path: 'professor/preferences', 
     component: PreferencesFormComponent,
     canActivate: [AuthGuard],
     data: { roles: ['PROFESSOR'] }
   },
-
-
-
-
   
+  // Routes par défaut
   { path: 'unauthorized', component: HomeComponent },
   { path: '**', redirectTo: '' }
-
 ];

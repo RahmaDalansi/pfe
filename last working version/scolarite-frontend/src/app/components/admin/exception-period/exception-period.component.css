@@ -1,0 +1,235 @@
+/* exception-period.component.css */
+.exception-period-container {
+  position: relative;
+}
+
+/* Bouton principal */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Modal */
+.modal.fade.show {
+  display: block;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-dialog {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1rem 1.5rem;
+}
+
+.modal-header .modal-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Style des formulaires */
+.form-label {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.form-label i {
+  margin-right: 0.5rem;
+  color: #667eea;
+}
+
+.form-control, .form-select {
+  border: 1px solid #e1e5e9;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Alert info */
+.alert-info {
+  background-color: #e7f3ff;
+  border: 1px solid #b8daff;
+  color: #004085;
+  border-radius: 10px;
+}
+
+.alert-info i {
+  margin-right: 0.5rem;
+}
+
+/* Notification */
+.alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1060;
+  min-width: 350px;
+  max-width: 500px;
+  animation: slideInRight 0.3s ease-out;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 10px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 1rem;
+  }
+  
+  .alert {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+  }
+  
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .d-flex.justify-content-end {
+    justify-content: center !important;
+  }
+  
+  .form-label {
+    font-size: 0.8rem;
+  }
+  
+  .form-control, .form-select {
+    font-size: 0.9rem;
+  }
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Select styling */
+.form-select {
+  cursor: pointer;
+}
+
+.form-select option {
+  padding: 0.5rem;
+}
+
+/* Date inputs */
+input[type="datetime-local"] {
+  cursor: pointer;
+}
+
+/* Hover effects */
+.form-control:hover, .form-select:hover {
+  border-color: #667eea;
+}
+
+/* Focus visible */
+.form-control:focus-visible, .form-select:focus-visible {
+  outline: none;
+}

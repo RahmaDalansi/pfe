@@ -1,0 +1,39 @@
+/* Modal styles */
+.modal-backdrop {
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+/* Preferences table */
+.preferences-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.preferences-table th,
+.preferences-table td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #dee2e6;
+}
+
+.preferences-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.status-badge i {
+  font-size: 0.875rem;
+}

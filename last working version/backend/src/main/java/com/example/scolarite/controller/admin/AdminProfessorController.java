@@ -1,9 +1,16 @@
 package com.example.scolarite.controller.admin;
 
 import com.example.scolarite.dto.ProfessorDto;
+import com.example.scolarite.dto.ProfileDto;
 import com.example.scolarite.dto.SubjectDto;
+import com.example.scolarite.entity.Professor;
+import com.example.scolarite.entity.TeachingPreferences;
+import com.example.scolarite.repository.ProfessorRepository;
+import com.example.scolarite.repository.TeachingPreferencesRepository;
+import com.example.scolarite.service.KeycloakUserService;
 import com.example.scolarite.service.ProfessorService;
 import com.example.scolarite.service.SubjectService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -85,4 +92,62 @@ public class AdminProfessorController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+
+
+
+
+
+
+    // Dans AdminProfessorController.java
+    @Autowired
+    private ProfessorRepository professorRepository;
+
+    @Autowired
+    private TeachingPreferencesRepository teachingPreferencesRepository;
+
+    @Autowired
+    private KeycloakUserService keycloakUserService;
+
+    @PostMapping("/sync-from-keycloak")
+    public ResponseEntity<Map<String, Object>> syncProfessorsFromKeycloak() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            List<ProfileDto> allProfessors = keycloakUserService.getAllUsers("PROFESSOR", null);
+            int created = 0;
+            int alreadyExist = 0;
+
+            for (ProfileDto professorProfile : allProfessors) {
+                if (!professorRepository.existsByKeycloakId(professorProfile.getId())) {
+                    Professor professor = new Professor(professorProfile.getId());
+                    professor = professorRepository.save(professor);
+
+                    // Créer les préférences associées
+                    TeachingPreferences preferences = new TeachingPreferences(professor);
+                    teachingPreferencesRepository.save(preferences);
+
+                    created++;
+                } else {
+                    alreadyExist++;
+                }
+            }
+
+            response.put("success", true);
+            response.put("totalKeycloakProfessors", allProfessors.size());
+            response.put("created", created);
+            response.put("alreadyExist", alreadyExist);
+            response.put("message", created + " professeurs synchronisés avec succès");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Erreur: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+
+
 }

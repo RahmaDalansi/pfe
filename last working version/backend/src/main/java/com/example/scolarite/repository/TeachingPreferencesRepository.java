@@ -18,4 +18,6 @@ public interface TeachingPreferencesRepository extends JpaRepository<TeachingPre
 
     @Query("SELECT tp FROM TeachingPreferences tp WHERE tp.submissionPeriodId = :periodId AND tp.isSubmitted = true")
     List<TeachingPreferences> findBySubmissionPeriodId(@Param("periodId") Long periodId);
+
+
 }

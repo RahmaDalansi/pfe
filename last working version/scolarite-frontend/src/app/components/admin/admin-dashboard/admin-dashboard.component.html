@@ -11,7 +11,7 @@
     </p>
   </div>
 
-  <!-- Statistiques (à développer) -->
+  <!-- Statistiques -->
   <div class="row mb-4">
     <div class="col-md-3 mb-3">
       <div class="card stat-card bg-primary text-white">
@@ -164,7 +164,45 @@
     </div>
   </div>
 
-  <!-- Section: Emploi du temps (à développer) -->
+  <!-- Section: Gestion des périodes de soumission -->
+  <div class="card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-calendar-range me-2 text-primary"></i>
+        Gestion des périodes de soumission
+      </h5>
+      <a routerLink="/admin/periods" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-gear"></i> Gérer les périodes
+      </a>
+    </div>
+    <div class="card-body">
+      <!-- Sélecteur de période -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Sélectionner une période</label>
+        <select class="form-select" (change)="onPeriodChange($event)">
+          <option value="">-- Choisir une période --</option>
+          @for (period of periods; track period.id) {
+            <option [value]="period.id">
+              {{ period.name }} ({{ period.academicYear }} - Semestre {{ period.semester }})
+            </option>
+          }
+        </select>
+      </div>
+      
+      <!-- Statistiques de la période sélectionnée -->
+      @if (selectedPeriodId) {
+        <app-submission-statistics [periodId]="selectedPeriodId" [periodName]="selectedPeriodName">
+        </app-submission-statistics>
+        
+        <!-- Période exceptionnelle -->
+        <div class="mt-3">
+          <app-exception-period [periodId]="selectedPeriodId"></app-exception-period>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Section: Emploi du temps -->
   <div class="card">
     <div class="card-header bg-white">
       <h5 class="mb-0">

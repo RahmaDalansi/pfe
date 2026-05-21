@@ -1,0 +1,163 @@
+<!-- src/app/components/admin/submission-statistics/submission-statistics.component.html -->
+<div class="submission-statistics">
+  <!-- En-tête avec période -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="mb-0">Statistiques des soumissions</h3>
+      <p class="text-muted mb-0">{{ periodName }}</p>
+    </div>
+    <button class="btn btn-outline-primary btn-sm" (click)="refresh()" [disabled]="isLoading">
+      <i class="bi bi-arrow-repeat"></i> Rafraîchir
+    </button>
+  </div>
+
+  <!-- Barre de progression -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between mb-2">
+        <span>Taux de soumission</span>
+        <span class="fw-bold">{{ getProgressPercent() | number:'1.0-0' }}%</span>
+      </div>
+      <div class="progress" style="height: 10px;">
+        <div class="progress-bar bg-success" 
+             [style.width.%]="getProgressPercent()"
+             role="progressbar">
+        </div>
+      </div>
+      <div class="row mt-3 text-center">
+        <div class="col-4">
+          <div class="fs-4 fw-bold text-success">{{ getSubmittedCount() }}</div>
+          <small class="text-muted">Soumis</small>
+        </div>
+        <div class="col-4">
+          <div class="fs-4 fw-bold text-warning">{{ getExceptionCount() }}</div>
+          <small class="text-muted">Exceptions</small>
+        </div>
+        <div class="col-4">
+          <div class="fs-4 fw-bold text-secondary">{{ getNotSubmittedCount() }}</div>
+          <small class="text-muted">Non soumis</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onglets avec les bons compteurs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="selectedTab === 'submitted'" (click)="selectedTab = 'submitted'">
+        <i class="bi bi-check-circle-fill text-success"></i>
+        Soumis ({{ getSubmittedCount() }})
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="selectedTab === 'exception'" (click)="selectedTab = 'exception'">
+        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+        Exceptions ({{ getExceptionCount() }})
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="selectedTab === 'notSubmitted'" (click)="selectedTab = 'notSubmitted'">
+        <i class="bi bi-x-circle-fill text-secondary"></i>
+        Non soumis ({{ getNotSubmittedCount() }})
+      </a>
+    </li>
+  </ul>
+
+  <!-- Liste des professeurs -->
+  <div class="card">
+    <div class="card-body p-0">
+      @if (isLoading) {
+        <div class="text-center p-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+      } @else if (getProfessorsForCurrentTab().length === 0) {
+        <div class="text-center p-5 text-muted">
+          <i class="bi bi-inbox fs-1"></i>
+          <p class="mt-2">Aucun professeur dans cette catégorie</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Professeur</th>
+                <th>Email</th>
+                <th>Statut</th>
+                <th>Date de soumission</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (professor of getProfessorsForCurrentTab(); track professor.keycloakId) {
+                <tr [class.table-success]="hasSubmitted(professor)">
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-circle me-2" [style.backgroundColor]="'#' + (professor.keycloakId.charCodeAt(0) * 1000000).toString(16).slice(0,6)">
+                        {{ (professor.firstName ? professor.firstName.charAt(0) : (professor.username ? professor.username.charAt(0) : '?')) | uppercase }}
+                      </div>
+                      <div>
+                        <div class="fw-bold">{{ getProfessorFullName(professor) }}</div>
+                        <small class="text-muted">@{{ professor.username }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ professor.email }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatusBadgeClass(professor)">
+                      {{ getStatusText(professor) }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (professor.submittedAt) {
+                      {{ professor.submittedAt | date:'dd/MM/yyyy HH:mm' }}
+                    } @else {
+                      <span class="text-muted">-</span>
+                    }
+                  </td>
+                  <td>
+                    @if (hasSubmitted(professor)) {
+                      <button class="btn btn-sm btn-outline-info" (click)="viewPreferences(professor)">
+                        <i class="bi bi-eye"></i> Voir préférences
+                      </button>
+                    } @else {
+                      <button class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="bi bi-eye-slash"></i> Non disponible
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Modal des préférences -->
+  @if (selectedProfessor && showPreferencesModal) {
+    <app-professor-preferences-detail
+      [periodId]="periodId"
+      [professorKeycloakId]="selectedProfessor.keycloakId"
+      [professorName]="getProfessorFullName(selectedProfessor)"
+      [openModal]="showPreferencesModal"
+      (close)="closePreferencesModal()">
+    </app-professor-preferences-detail>
+  }
+</div>
+
+<style>
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-right: 12px;
+}
+</style>

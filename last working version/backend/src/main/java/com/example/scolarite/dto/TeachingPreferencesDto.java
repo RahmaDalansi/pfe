@@ -1,4 +1,3 @@
-// com.example.scolarite.dto.TeachingPreferencesDto.java
 package com.example.scolarite.dto;
 
 import java.time.LocalDateTime;
@@ -10,16 +9,20 @@ public class TeachingPreferencesDto {
     private Long submissionPeriodId;
     private LocalDateTime submittedAt;
     private Boolean isSubmitted;
-
+    private String submissionStatus;
     // Préférences
-    private List<String> preferredDays; // ["MONDAY", "TUESDAY"]
-    private List<String> unavailableDays; // ["WEDNESDAY"]
-    private List<String> preferredTimeSlots; // ["MORNING", "AFTERNOON"]
+    private List<String> preferredDays;
+    private List<String> unavailableDays;
+    private List<String> preferredTimeSlots;
     private Integer maxHoursPerDay;
     private Integer maxHoursPerWeek;
 
-    // Commentaires
+    // NOUVEAUX CHAMPS
+    private List<DailyPreferencesDetailDto> dailyPreferences;  // AJOUTER
+    private String globalNotes;  // AJOUTER (alias pour notes)
     private String notes;
+
+    // Commentaires
     private List<ConstraintDto> constraints;
 
     // Constructeurs
@@ -59,17 +62,27 @@ public class TeachingPreferencesDto {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
+    // NOUVEAUX GETTERS/SETTERS
+    public List<DailyPreferencesDetailDto> getDailyPreferences() { return dailyPreferences; }
+    public void setDailyPreferences(List<DailyPreferencesDetailDto> dailyPreferences) { this.dailyPreferences = dailyPreferences; }
+
+    public String getGlobalNotes() { return globalNotes != null ? globalNotes : notes; }
+    public void setGlobalNotes(String globalNotes) { this.globalNotes = globalNotes; this.notes = globalNotes; }
+
     public List<ConstraintDto> getConstraints() { return constraints; }
     public void setConstraints(List<ConstraintDto> constraints) { this.constraints = constraints; }
 
+    public String getSubmissionStatus() { return submissionStatus; }
+    public void setSubmissionStatus(String submissionStatus) { this.submissionStatus = submissionStatus; }
+
+
     // Classe interne pour les contraintes
     public static class ConstraintDto {
-        private String type; // "UNAVAILABLE", "PREFERRED", etc.
+        private String type;
         private String day;
         private String timeSlot;
         private String reason;
 
-        // Getters et Setters
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
 

@@ -5,11 +5,20 @@ import { RouterLink } from '@angular/router';
 import { KeycloakAuthService } from '../../../services/keycloak.service';
 import { UserManagementService } from '../../../services/user-management.service';
 import { AdminValidationService } from '../../../services/admin-validation.service';
+import { SubmissionPeriodService } from '../../../services/submission-period.service';
+import { SubmissionPeriod } from '../../../models/submission-period.models';
+import { SubmissionStatisticsComponent } from '../submission-statistics/submission-statistics.component';
+import { ExceptionPeriodComponent } from '../exception-period/exception-period.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule, 
+    RouterLink,
+    SubmissionStatisticsComponent,
+    ExceptionPeriodComponent
+  ],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })
@@ -24,15 +33,22 @@ export class AdminDashboardComponent implements OnInit {
     pendingValidations: 0
   };
 
+  // Propriétés pour la gestion des périodes
+  periods: SubmissionPeriod[] = [];
+  selectedPeriodId: number | null = null;
+  selectedPeriodName: string = '';
+
   constructor(
     private keycloakService: KeycloakAuthService,
     private userManagementService: UserManagementService,
-    private adminValidationService: AdminValidationService
+    private adminValidationService: AdminValidationService,
+    private periodService: SubmissionPeriodService
   ) {}
 
   ngOnInit() {
     this.loadAdminInfo();
     this.loadStats();
+    this.loadPeriods();
   }
 
   loadAdminInfo() {
@@ -62,5 +78,27 @@ export class AdminDashboardComponent implements OnInit {
         console.error('Erreur chargement stats validations:', error);
       }
     });
+  }
+
+  loadPeriods() {
+    this.periodService.getAllPeriods().subscribe({
+      next: (periods) => {
+        this.periods = periods;
+      },
+      error: (error) => {
+        console.error('Erreur chargement périodes:', error);
+      }
+    });
+  }
+
+  onPeriodChange(event: any) {
+    const periodId = event.target.value;
+    if (periodId) {
+      this.selectedPeriodId = parseInt(periodId);
+      const period = this.periods.find(p => p.id === this.selectedPeriodId);
+      this.selectedPeriodName = period?.name || '';
+    } else {
+      this.selectedPeriodId = null;
+    }
   }
 }

@@ -1,6 +1,8 @@
 package com.example.scolarite.service;
 
 import com.example.scolarite.dto.*;
+import com.example.scolarite.entity.Professor;
+import com.example.scolarite.repository.ProfessorRepository;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
@@ -20,11 +22,16 @@ public class KeycloakUserService {
 
     private final Keycloak keycloak;
     private final String realm;
+    private final ProfessorRepository professorRepository;
+
 
     public KeycloakUserService(Keycloak keycloak,
-                               @Value("${keycloak.realm}") String realm) {
+                               @Value("${keycloak.realm}") String realm,
+                               ProfessorRepository professorRepository) {
         this.keycloak = keycloak;
         this.realm = realm;
+        this.professorRepository = professorRepository;
+
     }
 
     // ==================== MÉTHODE EXISTANTE POUR L'IMPORT CSV ====================
@@ -231,20 +238,32 @@ public class KeycloakUserService {
                 System.err.println("Could not remove PENDING role: " + e.getMessage());
             }
 
+            boolean isProfessor = false;
             // Assigner les nouveaux rôles
             for (String roleName : roles) {
                 try {
                     assignRoleToUserInternal(userId, roleName);
+                    if ("PROFESSOR".equals(roleName)) {
+                        isProfessor = true;
+                    }
                 } catch (Exception e) {
                     System.err.println("Could not assign role " + roleName + ": " + e.getMessage());
                 }
             }
 
-            // Mettre à jour l'utilisateur (email vérifié)
+            // ✅ CRITIQUE: Créer le professeur dans la base locale si nécessaire
+            if (isProfessor && professorRepository != null) {
+                if (!professorRepository.existsByKeycloakId(userId)) {
+                    Professor professor = new Professor(userId);
+                    professorRepository.save(professor);
+                    System.out.println("✅ Professeur créé dans la base locale: " + userId);
+                }
+            }
+
+            // Mettre à jour l'utilisateur
             UserRepresentation user = userResource.toRepresentation();
             user.setEmailVerified(true);
 
-            // Ajouter un attribut pour marquer la validation
             Map<String, List<String>> attributes = user.getAttributes();
             if (attributes == null) {
                 attributes = new HashMap<>();
@@ -255,14 +274,13 @@ public class KeycloakUserService {
 
             userResource.update(user);
 
-            return null; // Succès
+            return null;
 
         } catch (Exception e) {
             e.printStackTrace();
             return "Error approving user: " + e.getMessage();
         }
     }
-
     /**
      * Rejeter un utilisateur (supprimer le compte)
      */
