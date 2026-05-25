@@ -23,14 +23,17 @@ public class KeycloakUserService {
     private final Keycloak keycloak;
     private final String realm;
     private final ProfessorRepository professorRepository;
+    private final UserApprovalService userApprovalService;
 
 
     public KeycloakUserService(Keycloak keycloak,
                                @Value("${keycloak.realm}") String realm,
-                               ProfessorRepository professorRepository) {
+                               ProfessorRepository professorRepository,
+                               UserApprovalService userApprovalService) {
         this.keycloak = keycloak;
         this.realm = realm;
         this.professorRepository = professorRepository;
+        this.userApprovalService = userApprovalService;
 
     }
 
@@ -68,6 +71,13 @@ public class KeycloakUserService {
             user.setEmailVerified(true); // Auto-verified for admin imports
             user.setRequiredActions(Arrays.asList("UPDATE_PASSWORD"));
 
+            // Ajouter le CIN dans les attributs
+            Map<String, List<String>> attributes = new HashMap<>();
+            attributes.put("cin", List.of(userDto.getCin()));
+            attributes.put("importedBy", List.of("admin"));
+            attributes.put("importDate", List.of(new Date().toString()));
+            user.setAttributes(attributes);
+
             // Create the user
             Response response = usersResource.create(user);
 
@@ -86,6 +96,22 @@ public class KeycloakUserService {
                 assignRoleToUserInternal(userId, userDto.getRole());
             }
 
+            // ========== NOUVEAU : CRÉER LES ENTITÉS MÉTIER ==========
+            // Créer les entités métier selon le rôle (Professor, Student, TeachingPreferences)
+            try {
+                List<String> roles = List.of(userDto.getRole());
+                userApprovalService.handleUserApproval(userId, roles);
+                System.out.println("✅ Entités métier créées pour l'utilisateur: " + userDto.getUsername() +
+                        " (rôle: " + userDto.getRole() + ")");
+            } catch (Exception e) {
+                // L'utilisateur existe déjà dans Keycloak, mais on log l'erreur
+                // pour que l'admin puisse corriger manuellement si nécessaire
+                System.err.println("⚠️ Erreur lors de la création des entités métier pour " +
+                        userDto.getUsername() + ": " + e.getMessage());
+                System.err.println("   L'utilisateur a été créé dans Keycloak mais doit être synchronisé manuellement.");
+                // Ne pas retourner d'erreur car l'utilisateur existe déjà dans Keycloak
+            }
+
             return null; // No error
 
         } catch (Exception e) {
@@ -93,7 +119,6 @@ public class KeycloakUserService {
             return "Error creating user " + userDto.getUsername() + ": " + e.getMessage();
         }
     }
-
     // ==================== NOUVELLES MÉTHODES POUR L'INSCRIPTION AVEC VALIDATION ====================
 
     /**
@@ -225,6 +250,7 @@ public class KeycloakUserService {
     /**
      * Approuver un utilisateur et lui assigner des rôles
      */
+// Dans KeycloakUserService.java
     public String approveUser(String userId, List<String> roles) {
         try {
             RealmResource realmResource = keycloak.realm(realm);
@@ -238,25 +264,12 @@ public class KeycloakUserService {
                 System.err.println("Could not remove PENDING role: " + e.getMessage());
             }
 
-            boolean isProfessor = false;
             // Assigner les nouveaux rôles
             for (String roleName : roles) {
                 try {
                     assignRoleToUserInternal(userId, roleName);
-                    if ("PROFESSOR".equals(roleName)) {
-                        isProfessor = true;
-                    }
                 } catch (Exception e) {
                     System.err.println("Could not assign role " + roleName + ": " + e.getMessage());
-                }
-            }
-
-            // ✅ CRITIQUE: Créer le professeur dans la base locale si nécessaire
-            if (isProfessor && professorRepository != null) {
-                if (!professorRepository.existsByKeycloakId(userId)) {
-                    Professor professor = new Professor(userId);
-                    professorRepository.save(professor);
-                    System.out.println("✅ Professeur créé dans la base locale: " + userId);
                 }
             }
 
@@ -281,6 +294,8 @@ public class KeycloakUserService {
             return "Error approving user: " + e.getMessage();
         }
     }
+
+
     /**
      * Rejeter un utilisateur (supprimer le compte)
      */

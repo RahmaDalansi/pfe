@@ -1,0 +1,153 @@
+<!-- src/app/components/admin/department-management/department-management.component.html -->
+<div class="department-management">
+  <!-- En-tête -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-building me-2"></i>
+      Gestion des Départements
+    </h2>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="bi bi-plus-circle me-2"></i>
+      Nouveau Département
+    </button>
+  </div>
+
+  <!-- Notification -->
+  <div *ngIf="notification" class="alert alert-{{ notification.type }} alert-dismissible fade show" role="alert">
+    {{ notification.message }}
+    <button type="button" class="btn-close" (click)="notification = null"></button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label">Recherche</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" placeholder="Code ou nom du département..." [(ngModel)]="searchTerm" (input)="onSearchChange()">
+            <button class="btn btn-outline-secondary" *ngIf="searchTerm" (click)="resetFilters()">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="activeOnly" [(ngModel)]="activeOnly" (change)="onActiveOnlyChange()">
+            <label class="form-check-label" for="activeOnly">Afficher uniquement les actifs</label>
+          </div>
+        </div>
+        <div class="col-md-3 text-end">
+          <small class="text-muted">{{ filteredDepartments.length }} département(s)</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des départements -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Code</th>
+              <th>Nom</th>
+              <th>Description</th>
+              <th>Responsable</th>
+              <th>Spécialités</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let department of filteredDepartments">
+              <td><strong>{{ department.code }}</strong></td>
+              <td>{{ department.name }}</td>
+              <td class="text-muted">
+                {{ getShortDescription(department.description) }}
+              </td>
+              <td>{{ department.headOfDepartment || '-' }}</td>
+              <td>
+                <span class="badge bg-info">{{ department.specialtyCount }}</span>
+              </td>
+              <td>
+                <span class="badge {{ getStatusBadge(department.isActive) }}">
+                  {{ getStatusText(department.isActive) }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1" (click)="openEditModal(department)" title="Modifier">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-1" (click)="toggleStatus(department)" title="Activer/Désactiver">
+                  <i class="bi bi-power"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="hardDeleteDepartment(department, $event)" title="Supprimer définitivement">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredDepartments.length === 0">
+              <td colspan="7" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-1"></i>
+                <p class="mb-0">Aucun département trouvé</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1" (click)="closeModal()">
+  <div class="modal-dialog modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-building me-2"></i>
+          {{ isEditing ? 'Modifier le département' : 'Nouveau département' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Code *</label>
+              <input type="text" class="form-control" [(ngModel)]="currentDepartment.code" name="code" placeholder="Ex: INFO, MECA, CIVIL">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nom *</label>
+              <input type="text" class="form-control" [(ngModel)]="currentDepartment.name" name="name" placeholder="Ex: Informatique, Mécanique">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="currentDepartment.description" name="description" placeholder="Description du département..."></textarea>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Responsable du département</label>
+              <input type="text" class="form-control" [(ngModel)]="currentDepartment.headOfDepartment" name="headOfDepartment" placeholder="Nom du responsable">
+            </div>
+            <div class="col-md-4">
+              <div class="form-check form-switch mt-4">
+                <input class="form-check-input" type="checkbox" id="isActive" [(ngModel)]="currentDepartment.isActive" name="isActive">
+                <label class="form-check-label" for="isActive">Département actif</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="saveDepartment()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop -->
+<div *ngIf="showModal" class="modal-backdrop fade show"></div>

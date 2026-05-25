@@ -19,6 +19,12 @@ import { SmartProfileComponent } from './components/profile/smart/smart-profile.
 import { StandardProfileComponent } from './components/profile/standard/standard-profile.component';
 import { ProfessorProfileComponent } from './components/profile/professor/professor-profile.component';
 import { ClassroomManagementComponent } from './components/admin/classroom-management/classroom-management.component';
+import { DepartmentManagementComponent } from './components/admin/department-management/department-management.component';
+import { SpecialtyManagementComponent } from './components/admin/specialty-management/specialty-management.component';
+import { LevelManagementComponent } from './components/admin/level-management/level-management.component';
+import { GroupManagementComponent } from './components/admin/group-management/group-management.component';
+
+
 
 // NOUVEAUX IMPORTS
 import { PeriodManagementComponent } from './components/admin/period-management/period-management.component';
@@ -122,6 +128,30 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: { roles: ['ADMIN'] }
   },
+  { 
+  path: 'admin/departments', 
+  component: DepartmentManagementComponent,
+  canActivate: [AuthGuard],
+  data: { roles: ['ADMIN'] }
+},
+{ 
+  path: 'admin/specialties', 
+  component: SpecialtyManagementComponent,
+  canActivate: [AuthGuard],
+  data: { roles: ['ADMIN'] }
+},
+{ 
+  path: 'admin/levels', 
+  component: LevelManagementComponent,
+  canActivate: [AuthGuard],
+  data: { roles: ['ADMIN'] }
+},
+{ 
+  path: 'admin/groups', 
+  component: GroupManagementComponent,
+  canActivate: [AuthGuard],
+  data: { roles: ['ADMIN'] }
+},
   
   // Route professeur
   { 

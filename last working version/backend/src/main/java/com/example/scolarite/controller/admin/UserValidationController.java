@@ -3,6 +3,7 @@ package com.example.scolarite.controller.admin;
 import com.example.scolarite.dto.PendingUserDto;
 import com.example.scolarite.dto.UserValidationDto;
 import com.example.scolarite.service.KeycloakUserService;
+import com.example.scolarite.service.UserApprovalService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +18,15 @@ import java.util.Map;
 public class UserValidationController {
 
     private final KeycloakUserService keycloakUserService;
+    private final UserApprovalService userApprovalService;
+
 
     // Injection du service seulement - c'est le service qui a accès à keycloak
-    public UserValidationController(KeycloakUserService keycloakUserService) {
+    public UserValidationController(KeycloakUserService keycloakUserService,
+                                    UserApprovalService userApprovalService) {
         this.keycloakUserService = keycloakUserService;
+        this.userApprovalService = userApprovalService;
+
     }
 
     /**
@@ -63,9 +69,20 @@ public class UserValidationController {
             return ResponseEntity.badRequest().body(response);
         }
 
+
+        // 1. Approuver dans Keycloak
         String error = keycloakUserService.approveUser(validationDto.getUserId(), validationDto.getRoles());
 
         if (error == null) {
+            // 2. Créer les entrées dans la base métier
+            try {
+                userApprovalService.handleUserApproval(validationDto.getUserId(), validationDto.getRoles());
+            } catch (Exception e) {
+                System.err.println("Erreur création entités métier: " + e.getMessage());
+                // Ne pas bloquer l'approbation si seulement la création métier échoue
+            }
+
+
             response.put("success", true);
             response.put("message", "Utilisateur approuvé avec succès");
             return ResponseEntity.ok(response);
